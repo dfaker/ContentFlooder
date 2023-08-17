@@ -135,7 +135,8 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                     wrapper.style.backgroundImage='url("'+retVal.props.original+'")'
                     wrapper.style.backgroundAttachment='fixed'
                     wrapper.style.backgroundSize='contain'
-                    wrapper.style.backgroundPositionX='50%'
+                    
+                    wrapper.style.backgroundPosition='center top';
                 }
 
 
