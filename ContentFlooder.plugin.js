@@ -152,11 +152,15 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 }else{
                     vid = document.createElement("video");
                     vid.className="fsvideowrappercontentflooder"
-                    vid.style.position='fixed'
-                    vid.style.top='0px'
-                    vid.style.bottom='0px'
-                    vid.style.width='100%'
-                    vid.style.height='100%'
+
+                    vid.style.position = 'fixed';
+                    vid.style.top = '111px';
+                    vid.style.bottom = '0px';
+                    vid.style.left = '323px';
+                    vid.style.right = '68px';
+                    vid.style.width = '77%';
+                    vid.style.height = '86%';
+
                     vid.style.zIndex='-1'
                     vid.autoplay=true
                     vid.loop=true
@@ -166,26 +170,15 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
 
 
 
-                if (retVal.props.src && retVal.props.src.match(/(\.webm\?)/)) {
+                if (retVal.props.src && retVal.props.src.match(/(\.webm\?|\.mov\?|\.mp4\?)/)) {
                     let parts = retVal.props.src.split('?')
-                    vid.src = parts[0]    
-                    vid.style.display=''
-                    
-                    wrapper.style.backgroundImage='';
-                }else if (retVal.props.src && retVal.props.src.match(/(\.mov\?)/)) {
-                    let parts = retVal.props.src.split('?')
-                    vid.src = parts[0]    
-                    vid.style.display=''
-                    
-                    wrapper.style.backgroundImage='';
-                }else if (retVal.props.src && retVal.props.src.match(/(\.mp4\?)/)) {
-                    let parts = retVal.props.src.split('?')
-                    vid.src = parts[0]    
-                    vid.style.display=''
-                    
+                    if(vid.src != parts[0]){
+                        vid.src = parts[0]    
+                    }                        
+                    vid.style.display=''                    
                     wrapper.style.backgroundImage='';
                 }else if (retVal.props.original && retVal.props.original.match(/(jpg|png|gif|jpeg)$/)) {
-
+                    
                     wrapper.style.backgroundImage='url("'+retVal.props.original+'")'
                     wrapper.style.backgroundAttachment='fixed'
                     wrapper.style.backgroundSize='contain'
