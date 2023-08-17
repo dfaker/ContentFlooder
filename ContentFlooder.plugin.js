@@ -119,27 +119,72 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 const channel = ChannelStore.getChannel(SelectedChannelStore.getChannelId());
                 if (!this.isFlooding(channel)) return;
 
-                console.log('retVal',retVal.props.original)
+                //console.log('retVal original',retVal.props.original)
+                //console.log('retVal src',retVal.props.src)
 
-                if (retVal.props.original && retVal.props.original.match(/(jpg|png|gif)$/)) {
-
-                    let divs = document.getElementsByTagName('ol');
-                    let wrapper = null;
-                    let di = 0;
-                    for(di in divs){
-                        if(divs[di].className && divs[di].className.indexOf('scrollerInner') > -1){
-                            wrapper = divs[di];
-                            break
-                        }
+                let divs = document.getElementsByTagName('ol');
+                let wrapper = null;
+                let di = 0;
+                for(di in divs){
+                    if(divs[di].className && divs[di].className.indexOf('scrollerInner') > -1){
+                        wrapper = divs[di];
+                        break
                     }
+                }
+
+
+                let vids = document.getElementsByClassName('fsvideowrappercontentflooder')
+                let vid  = null;
+
+                if(vids.length > 0){
+                    vid = vids[0];  
+                }else{
+                    vid = document.createElement("video");
+                    vid.className="fsvideowrappercontentflooder"
+                    vid.style.position='fixed'
+                    vid.style.top='0px'
+                    vid.style.bottom='0px'
+                    vid.style.width='100%'
+                    vid.style.height='100%'
+                    vid.style.zIndex='-1'
+                    vid.autoplay=true
+                    vid.loop=true
+                    vid.volume=0
+                    wrapper.appendChild(vid)
+                }
+
+
+
+                if (retVal.props.src && retVal.props.src.match(/(\.webm\?)/)) {
+                    console.log('video src',retVal.props.src)
+                    let parts = retVal.props.src.split('?')
+                    vid.src = parts[0]    
+                    vid.style.display=''
+                    wrapper.style.backgroundImage='';
+                }else if (retVal.props.src && retVal.props.src.match(/(\.mov\?)/)) {
+                    console.log('video src',retVal.props.src)
+                    let parts = retVal.props.src.split('?')
+                    vid.src = parts[0]    
+                    vid.style.display=''
+                    wrapper.style.backgroundImage='';
+                }else if (retVal.props.src && retVal.props.src.match(/(\.mp4\?)/)) {
+                    console.log('video src',retVal.props.src)
+                    let parts = retVal.props.src.split('?')
+                    vid.src = parts[0]    
+                    vid.style.display=''
+                    wrapper.style.backgroundImage='';
+                }else if (retVal.props.original && retVal.props.original.match(/(jpg|png|gif|jpeg)$/)) {
+                    
                     wrapper.style.backgroundImage='url("'+retVal.props.original+'")'
                     wrapper.style.backgroundAttachment='fixed'
                     wrapper.style.backgroundSize='contain'
                     
                     wrapper.style.backgroundPosition='center top';
+                    
+                    vid.style.display='none'
+                    
                 }
-
-
+                
             });
 
 
