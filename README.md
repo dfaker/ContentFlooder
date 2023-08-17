@@ -2,7 +2,7 @@
 
 # Plugin to be used with https://betterdiscord.app/
 
-Sets Last Posted Discord Image As Channel Background
+Sets Last Posted Discord Image or Video As Channel Background
 
 Copy the file `ContentFlooder.plugin.js` into the BetterDiscord plugins folder, and enable for a channel with the right click menu:
 
