@@ -1,7 +1,6 @@
-# ContentFlooder
-
 ![image](https://github.com/dfaker/ContentFlooder/assets/35278260/93c8ac49-6f09-4cbc-a9ba-1f6c7d2203a3)
 
+# Plugin to be used with https://betterdiscord.app/
 
 Sets Last Posted Discord Image As Channel Background
 
