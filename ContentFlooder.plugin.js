@@ -104,20 +104,34 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
         constructor(meta) {
             super();
             this.meta = meta;
-
+            this.styleTemplate = ".opacityElemFlood{opacity:0.2;} .opacityElemFlood:hover{opacity:1.0;}";
             this.channelChange = this.channelChange.bind(this);
         }
 
         onStart() {
             /** @type {Set<string>} */
-            this.blurredChannels = new Set(BdApi.loadData(this.meta.name, "floodModeOn") ?? []);
+            this.floodedChannels = new Set(BdApi.loadData(this.meta.name, "floodModeOn") ?? []);
+
+            /** @type {Set<string>} */
+            this.lowOpacityChannels = new Set(BdApi.loadData(this.meta.name, "opacityModeOn") ?? []);
+
 
             /** @type {Set<string>} */
             this.seenChannels = new Set(BdApi.loadData(this.meta.name, "seen") ?? []);
 
+            this.addStyle();
+
+
+
             Patcher.after(this.meta.name, InlineMediaWrapper.prototype, "render", (thisObject, _, retVal) => {
                 const channel = ChannelStore.getChannel(SelectedChannelStore.getChannelId());
                 if (!this.isFlooding(channel)) return;
+
+                if (this.isLowOpacity(channel)){
+                    if (retVal.props.className) retVal.props.className = retVal.props.className + " opacityElemFlood";
+                    else retVal.props.className = "opacityElemFlood";                    
+                }
+
 
                 //console.log('retVal original',retVal.props.original)
                 //console.log('retVal src',retVal.props.src)
@@ -160,21 +174,24 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                     let parts = retVal.props.src.split('?')
                     vid.src = parts[0]    
                     vid.style.display=''
+                    
                     wrapper.style.backgroundImage='';
                 }else if (retVal.props.src && retVal.props.src.match(/(\.mov\?)/)) {
                     console.log('video src',retVal.props.src)
                     let parts = retVal.props.src.split('?')
                     vid.src = parts[0]    
                     vid.style.display=''
+                    
                     wrapper.style.backgroundImage='';
                 }else if (retVal.props.src && retVal.props.src.match(/(\.mp4\?)/)) {
                     console.log('video src',retVal.props.src)
                     let parts = retVal.props.src.split('?')
                     vid.src = parts[0]    
                     vid.style.display=''
+                    
                     wrapper.style.backgroundImage='';
                 }else if (retVal.props.original && retVal.props.original.match(/(jpg|png|gif|jpeg)$/)) {
-                    
+
                     wrapper.style.backgroundImage='url("'+retVal.props.original+'")'
                     wrapper.style.backgroundAttachment='fixed'
                     wrapper.style.backgroundSize='contain'
@@ -193,26 +210,47 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
         }
         
         onStop() {
-            BdApi.saveData(this.meta.name, "floodModeOn", this.blurredChannels);
+            BdApi.saveData(this.meta.name, "floodModeOn", this.floodedChannels);
             BdApi.saveData(this.meta.name, "seen", this.seenChannels);
             this.contextMenuPatch?.();
             SelectedChannelStore.removeChangeListener(this.channelChange);
         }
 
         isFlooding(channel) {
-            return this.blurredChannels.has(channel.id);
+            return this.floodedChannels.has(channel.id);
+        }
+
+        isLowOpacity(channel) {
+            return this.lowOpacityChannels.has(channel.id);
+        }
+        
+
+        addStyle() {
+            DOM.addStyle(this.meta.name, this.styleTemplate);
         }
 
         addFlood(channel) {
-            this.blurredChannels.add(channel.id);
+            this.floodedChannels.add(channel.id);
             Dispatcher.emit("flood");
-            BdApi.saveData(this.meta.name, "floodModeOn", this.blurredChannels);
+            BdApi.saveData(this.meta.name, "floodModeOn", this.floodedChannels);
+        }
+
+        addLowOpacity(channel) {
+            this.lowOpacityChannels.add(channel.id);
+            Dispatcher.emit("flood");
+            BdApi.saveData(this.meta.name, "opacityModeOn", this.lowOpacityChannels);
         }
 
         removeFlood(channel) {
-            this.blurredChannels.delete(channel.id);
+            this.floodedChannels.delete(channel.id);
             Dispatcher.emit("flood");
-            BdApi.saveData(this.meta.name, "floodModeOn", this.blurredChannels);
+            BdApi.saveData(this.meta.name, "floodModeOn", this.floodedChannels);
+        }
+
+        removeLowOpacity(channel) {
+            this.lowOpacityChannels.delete(channel.id);
+            Dispatcher.emit("flood");
+            BdApi.saveData(this.meta.name, "opacityModeOn", this.lowOpacityChannels);
         }
 
         channelChange() {
@@ -226,6 +264,22 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
 
         patchChannelContextMenu() {
             this.contextMenuPatch = ContextMenu.patch("channel-context", (retVal, props) => {
+
+
+
+                const newItemopacity = ContextMenu.buildItem({
+                    type: "toggle",
+                    label: "Low Opacity Posts In Flood Mode",
+                    active: this.isLowOpacity(props.channel),
+                    action: () => {
+                        if (this.isLowOpacity(props.channel)) this.removeLowOpacity(props.channel);
+                        else this.addLowOpacity(props.channel);
+                    }
+                });
+
+
+                retVal.props.children.splice(1, 0, newItemopacity);
+
                 const newItem = ContextMenu.buildItem({
                     type: "toggle",
                     label: "Content Flood Mode",
@@ -237,6 +291,8 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 });
 
                 retVal.props.children.splice(1, 0, newItem);
+
+
             });
         }
 
