@@ -1,4 +1,8 @@
 # ContentFlooder
+
+![image](https://github.com/dfaker/ContentFlooder/assets/35278260/93c8ac49-6f09-4cbc-a9ba-1f6c7d2203a3)
+
+
 Sets Last Posted Discord Image As Channel Background
 
 Copy into the BetterDiscord plugins folder, and enable for a channel with the right click menu:
