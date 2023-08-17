@@ -122,7 +122,6 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             this.addStyle();
 
 
-
             Patcher.after(this.meta.name, InlineMediaWrapper.prototype, "render", (thisObject, _, retVal) => {
                 const channel = ChannelStore.getChannel(SelectedChannelStore.getChannelId());
                 if (!this.isFlooding(channel)) return;
@@ -132,10 +131,8 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                     else retVal.props.className = "opacityElemFlood";                    
                 }
 
-
-                //console.log('retVal original',retVal.props.original)
-                //console.log('retVal src',retVal.props.src)
-
+                //console.log('retVal original',retVal.props)
+                
                 let divs = document.getElementsByTagName('ol');
                 let wrapper = null;
                 let di = 0;
@@ -170,21 +167,18 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
 
 
                 if (retVal.props.src && retVal.props.src.match(/(\.webm\?)/)) {
-                    console.log('video src',retVal.props.src)
                     let parts = retVal.props.src.split('?')
                     vid.src = parts[0]    
                     vid.style.display=''
                     
                     wrapper.style.backgroundImage='';
                 }else if (retVal.props.src && retVal.props.src.match(/(\.mov\?)/)) {
-                    console.log('video src',retVal.props.src)
                     let parts = retVal.props.src.split('?')
                     vid.src = parts[0]    
                     vid.style.display=''
                     
                     wrapper.style.backgroundImage='';
                 }else if (retVal.props.src && retVal.props.src.match(/(\.mp4\?)/)) {
-                    console.log('video src',retVal.props.src)
                     let parts = retVal.props.src.split('?')
                     vid.src = parts[0]    
                     vid.style.display=''
@@ -195,7 +189,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                     wrapper.style.backgroundImage='url("'+retVal.props.original+'")'
                     wrapper.style.backgroundAttachment='fixed'
                     wrapper.style.backgroundSize='contain'
-                    
+                    wrapper.style.backgroundRepeatX='no-repeat'
                     wrapper.style.backgroundPosition='center top';
                     
                     vid.style.display='none'
@@ -203,7 +197,6 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 }
                 
             });
-
 
             this.promises = {state: {cancelled: false}, cancel() {this.state.cancelled = true;}};
             this.patchChannelContextMenu();
