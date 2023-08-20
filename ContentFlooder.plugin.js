@@ -104,8 +104,18 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
         constructor(meta) {
             super();
             this.meta = meta;
+            this.panes = {};
+            this.cache = []
+            this.cacheseen = []
+            this.paneindex = 0;
+            this.fullscreen = false;            
             this.styleTemplate = ".opacityElemFlood{opacity:0.2;} .opacityElemFlood:hover{opacity:1.0;}";
             this.channelChange = this.channelChange.bind(this);
+            this.isFullscreenMode = function(){return this.fullscreen};
+        }
+
+        isFullscreenMode(){
+            return this.fullscreen
         }
 
         onStart() {
@@ -121,6 +131,66 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
 
             this.addStyle();
 
+            let fspane = document.getElementById('fsfullscreencontentflooder')
+
+            if(!fspane){
+                fspane = document.createElement("div");
+                fspane.id="fsfullscreencontentflooder"
+                fspane.style.position='absolute'
+                fspane.style.position='absolute'
+                fspane.style.background='black'
+                fspane.style.width='100%'
+                fspane.style.height='100%'
+                fspane.style.top='0'
+                fspane.style.paddingtop='0'
+                fspane.style.zIndex='999'
+                fspane.style.display='none'
+                fspane.style.paddingTop='20px'
+
+                fspane.autoplay=true
+                fspane.loop=true
+                fspane.volume=0
+                document.body.appendChild(fspane)
+
+                let fspaneoptx = document.createElement("select");
+                fspaneoptx.id='fspaneoptselectx'
+                fspaneoptx.style.position='fixed'
+                fspaneoptx.style.top='20px'
+                fspaneoptx.style.left='0px'
+                fspaneoptx.style.zIndex='999'
+                fspaneoptx.onchange= (e) => { this.optionChange() }
+                fspane.appendChild(fspaneoptx)
+
+                let fspaneopty = document.createElement("select");
+                fspaneopty.id='fspaneoptselecty'
+                fspaneopty.style.position='fixed'
+                fspaneopty.style.top='20px'
+                fspaneopty.style.left='40px'
+                fspaneopty.style.zIndex='999'
+                fspaneopty.onchange= (e) => { this.optionChange() }
+                fspane.appendChild(fspaneopty)
+
+                for(let d=1;d<20;d++){
+
+                    let opt1 = document.createElement("option");
+                    opt1.text= d+''
+                    opt1.value= d+''
+                    fspaneoptx.appendChild(opt1)                          
+
+                    let opt2 = document.createElement("option");
+                    opt2.text= d+''
+                    opt2.value= d+''
+                    fspaneopty.appendChild(opt2)   
+                }
+    
+  
+
+                fspane.appendChild(fspaneoptx)
+                fspane.appendChild(fspaneopty)
+                this.optionChange()
+
+            }
+
 
             Patcher.after(this.meta.name, InlineMediaWrapper.prototype, "render", (thisObject, _, retVal) => {
                 const channel = ChannelStore.getChannel(SelectedChannelStore.getChannelId());
@@ -133,73 +203,211 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
 
                 //console.log('retVal original',retVal.props)
                 
-                let divs = document.getElementsByTagName('ol');
+                console.log(this.isFullscreenMode())
+
                 let wrapper = null;
-                let di = 0;
-                for(di in divs){
-                    if(divs[di].className && divs[di].className.indexOf('scrollerInner') > -1){
-                        wrapper = divs[di];
-                        break
+                if(this.isFullscreenMode()){
+                    wrapper = document.getElementById('fsfullscreencontentflooder');
+                }else{
+                    let divs = document.getElementsByTagName('ol');
+                    let di = 0;
+                    for(di in divs){
+                        if(divs[di].className && divs[di].className.indexOf('scrollerInner') > -1){
+                            wrapper = divs[di];
+                            break
+                        }
                     }
                 }
 
-
-                let vids = document.getElementsByClassName('fsvideowrappercontentflooder')
-                let vid  = null;
-
-                if(vids.length > 0){
-                    vid = vids[0];  
-                }else{
-                    vid = document.createElement("video");
-                    vid.className="fsvideowrappercontentflooder"
-
-                    vid.style.position = 'fixed';
-                    vid.style.top = '111px';
-                    vid.style.bottom = '0px';
-                    vid.style.left = '323px';
-                    vid.style.right = '68px';
-                    vid.style.width = '77%';
-                    vid.style.height = '86%';
-
-                    vid.style.zIndex='-1'
-                    vid.autoplay=true
-                    vid.loop=true
-                    vid.volume=0
-                    wrapper.appendChild(vid)
-                }
+                let gridElements = document.getElementsByClassName('cfgridcell') 
 
 
 
-                if (retVal.props.src && retVal.props.src.match(/(\.webm\?|\.mov\?|\.mp4\?)/)) {
-                    let parts = retVal.props.src.split('?')
-                    if(vid.src != parts[0]){
-                        vid.src = parts[0]    
-                    }                        
-                    vid.style.display=''                    
-                    wrapper.style.backgroundImage='';
-                }else if (retVal.props.original && retVal.props.original.match(/(jpg|png|gif|jpeg)$/)) {
+                if(wrapper){
+
                     
-                    wrapper.style.backgroundImage='url("'+retVal.props.original+'")'
-                    wrapper.style.backgroundAttachment='fixed'
-                    wrapper.style.backgroundSize='contain'
-                    wrapper.style.backgroundRepeatX='no-repeat'
-                    wrapper.style.backgroundPosition='center top';
-                    
-                    vid.style.display='none'
-                    
+                    let vids = document.getElementsByClassName('fsvideowrappercontentflooder')
+                    let vid  = null;
+
+                    if(vids.length > 0){
+                        vid = vids[0];  
+                    }else{
+                        vid = document.createElement("video");
+                        vid.className="fsvideowrappercontentflooder"
+
+                        vid.style.position = 'fixed';
+                        vid.style.top = '111px';
+                        vid.style.bottom = '0px';
+                        vid.style.left = '323px';
+                        vid.style.right = '68px';
+                        vid.style.width = '77%';
+                        vid.style.height = '86%';
+
+                        vid.style.zIndex='-1'
+                        vid.autoplay=true
+                        vid.loop=true
+                        vid.volume=0                    
+                        wrapper.appendChild(vid)
+                    }
+
+
+                    if(this.isFullscreenMode()){
+                        wrapper = gridElements[this.paneindex%gridElements.length]
+                        vid     = gridElements[this.paneindex%gridElements.length]
+                        this.paneindex++
+                    }
+
+                    let seen = [];
+                    let nextsrc = null
+                    let srctype    = 'video'
+                    if(this.isFullscreenMode()){
+                        let vi = 0;
+                        for(vi in gridElements){
+                            if(gridElements[vi]){
+                                seen.push(gridElements[vi].src)
+                                if(gridElements[vi].style){
+                                    seen.push(gridElements[vi].style.backgroundImage)  
+                                }
+                            }                          
+                        }
+                    }else{
+                        seen.push(vid.src)
+                        seen.push(vid.style.backgroundImage)
+                    }
+
+
+                    if (retVal.props.src && retVal.props.src.match(/(\.webm\?|\.mov\?|\.mp4\?)/)) {
+                        let parts = retVal.props.src.split('?')
+                        if(seen.indexOf(parts[0])==-1){
+                            nextsrc = parts[0]
+                            srctype    = 'video'
+                        }
+                    }else if (retVal.props.src && retVal.props.src.match(/(webm|mov|mp4)$/)) {
+                        if(seen.indexOf(retVal.props.src)==-1){
+                            nextsrc = retVal.props.src
+                            srctype    = 'video'
+                        }                
+                    }else if (retVal.props.original && retVal.props.original.match(/(webm|mov|mp4)$/)) {
+                        if(seen.indexOf(retVal.props.original)==-1){
+                            nextsrc = retVal.props.original
+                            srctype    = 'video'
+                        }
+                    }else if (retVal.props.original && retVal.props.original.match(/(jpg|webp|png|gif|jpeg)$/)) {
+                        let urlpart ='url("'+retVal.props.original+'")'
+                        if(seen.indexOf(urlpart)==-1){
+                            nextsrc = urlpart
+                            srctype    = 'img'
+                        }
+                    }
+
+                    console.log(nextsrc,this.paneindex%gridElements.length)
+                    if(nextsrc != null && vid){
+                        if(this.cacheseen.indexOf(nextsrc)==-1){
+                            this.cache.push({'src':nextsrc,'type':srctype})
+                            this.cacheseen.push(nextsrc)
+                        }                       
+
+                        if(srctype=='img'){
+                            vid.style.backgroundImage = nextsrc
+                            if(!this.isFullscreenMode()){
+                                vid.style.backgroundAttachment='fixed'
+                                vid.style.backgroundSize='contain'
+                                vid.style.backgroundRepeatX='no-repeat'
+                                vid.style.backgroundRepeatY='no-repeat'
+                                vid.style.backgroundPosition='center center';
+                                
+                            }
+                            vid.src = '';
+                        }else{
+                            vid.src = nextsrc;
+                            vid.style.display=''                    
+                            vid.style.backgroundImage='';
+                        }
+                    }else{
+                        this.paneindex = Math.max(this.paneindex-1,0)
+                    }
                 }
                 
             });
 
             this.promises = {state: {cancelled: false}, cancel() {this.state.cancelled = true;}};
             this.patchChannelContextMenu();
+            
+            document.body.addEventListener('keydown', (e) => { this.keyEvent(e) } );
         }
         
+        optionChange(){
+            let fspane = document.getElementById('fsfullscreencontentflooder')
+            let gridvaluex = document.getElementById('fspaneoptselectx').value
+            let gridvaluey = document.getElementById('fspaneoptselecty').value
+            
+            let gx = gridvaluex*1
+            let gy = gridvaluey*1
+            console.log(gx,gy)
+
+            const elements = document.getElementsByClassName('cfgridcell');
+            while(elements.length > 0){
+                elements[0].parentNode.removeChild(elements[0]);
+            }
+
+            let cacheoffset = Math.floor(Math.random() * this.cache.length);
+
+            for (let i = 0; i < (gx*gy); i++) {
+                let vid = document.createElement("video");
+                vid.className='cfgridcell'
+                vid.style.width= (100.0/gx)+'%'
+                vid.style.height= (100.0/gy)+'%'
+                vid.style.margin= '0px'
+                vid.style.padding= '0px'
+                vid.autoplay=true
+                vid.loop=true
+                vid.volume=0
+                vid.style.backgroundSize='contain'
+                vid.style.backgroundRepeatX='no-repeat'
+                vid.style.backgroundRepeatY='no-repeat'
+                vid.style.backgroundPosition='center center';
+                vid.style.opacity='1.0'
+
+
+                if(this.cache[(cacheoffset+i)%this.cache.length]){
+                    let entry = this.cache[(cacheoffset+i)%this.cache.length];
+                    if(entry['type']=='img'){
+                        vid.style.backgroundImage = entry['src']
+                        vid.src='';
+                    }else{
+                        vid.src = entry['src']
+                        vid.style.backgroundImage='';
+                    }
+                }
+
+                fspane.appendChild(vid)
+            }
+
+        }
+
+        keyEvent(e){
+            if(e.ctrlKey && e.key=='j'){
+                console.log('this.fullscreen',this.fullscreen)
+                this.fullscreen = !this.fullscreen;
+                console.log('this.fullscreen',e,this.fullscreen)
+                let fspane = document.getElementById('fsfullscreencontentflooder')
+                if(fspane){
+                    if(this.fullscreen){
+                        fspane.style.display=''
+                    }else{
+                        fspane.style.display='none'
+                    }
+                }
+
+            }    
+        }
+
         onStop() {
             BdApi.saveData(this.meta.name, "floodModeOn", this.floodedChannels);
             BdApi.saveData(this.meta.name, "seen", this.seenChannels);
             this.contextMenuPatch?.();
             SelectedChannelStore.removeChangeListener(this.channelChange);
+
         }
 
         isFlooding(channel) {
@@ -242,10 +450,8 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
         channelChange() {
             const channel = ChannelStore.getChannel(SelectedChannelStore.getChannelId());
             if (!channel?.id || this.seenChannels.has(channel.id)) return;
-
             this.seenChannels.add(channel.id);
             BdApi.saveData(this.meta.name, "seen", this.seenChannels);
-            if (this.settings.blurNSFW && channel.nsfw) this.addFlood(channel);
         }
 
         patchChannelContextMenu() {
@@ -278,10 +484,8 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
 
                 retVal.props.children.splice(1, 0, newItem);
 
-
             });
         }
-
 
 
         getSettingsPanel() {
