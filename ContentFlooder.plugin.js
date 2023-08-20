@@ -108,6 +108,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             this.cache = []
             this.cacheseen = []
             this.paneindex = 0;
+            this.volume=0;
             this.fullscreen = false;            
             this.styleTemplate = ".opacityElemFlood{opacity:0.2;} .opacityElemFlood:hover{opacity:1.0;}";
             this.channelChange = this.channelChange.bind(this);
@@ -169,6 +170,25 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 fspaneopty.style.zIndex='999'
                 fspaneopty.onchange= (e) => { this.optionChange() }
                 fspane.appendChild(fspaneopty)
+
+
+                let fspaneoptvol = document.createElement("select");
+                fspaneoptvol.id='fspaneoptselectvol'
+                fspaneoptvol.style.position='fixed'
+                fspaneoptvol.style.top='20px'
+                fspaneoptvol.style.left='80px'
+                fspaneoptvol.style.zIndex='999'
+                fspaneoptvol.onchange= (e) => { this.volChange() }
+                fspane.appendChild(fspaneoptvol)
+
+                for(let d=0;d<=100;d+=5){
+
+                    let opt1 = document.createElement("option");
+                    opt1.text= 'vol '+d+''
+                    opt1.value= 'vol '+d+''
+                    fspaneoptvol.appendChild(opt1)    
+
+                }
 
                 for(let d=1;d<20;d++){
 
@@ -336,6 +356,19 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             document.body.addEventListener('keydown', (e) => { this.keyEvent(e) } );
         }
         
+        volChange(){
+            this.volume = (document.getElementById('fspaneoptselectvol').value.split(' ')[1]*1.0)/100.0
+            console.log(this.volume);
+            let gridElements = document.getElementsByClassName('cfgridcell') 
+            let vi = 0;
+            for(vi in gridElements){
+                if(gridElements[vi] && gridElements[vi].volume){
+                    gridElements[vi].volume = this.volume;
+
+                }                          
+            }
+        }
+
         optionChange(){
             let fspane = document.getElementById('fsfullscreencontentflooder')
             let gridvaluex = document.getElementById('fspaneoptselectx').value
@@ -361,7 +394,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 vid.style.padding= '0px'
                 vid.autoplay=true
                 vid.loop=true
-                vid.volume=0
+                vid.volume=this.volume
                 vid.style.backgroundSize='contain'
                 vid.style.backgroundRepeatX='no-repeat'
                 vid.style.backgroundRepeatY='no-repeat'
