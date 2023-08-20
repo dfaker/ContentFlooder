@@ -113,8 +113,8 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             this.paneindex = 0;
             this.autoInterval=null;
             this.volume=0;
-            this.fullscreen = false;            
-            this.styleTemplate = ".opacityElemFlood{opacity:0.2;} .opacityElemFlood:hover{opacity:1.0;}";
+            this.fullscreen = false;
+            this.styleTemplate = ".opacityElemFlood{opacity:0.2;} .opacityElemFlood:hover{opacity:1.0;} .opacityLowElemFlood{opacity:0.5;} .opacityLowElemFlood:hover{opacity:1.0;}";
             this.channelChange = this.channelChange.bind(this);
             this.isFullscreenMode = function(){return this.fullscreen};
         }
@@ -181,6 +181,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
 
                 let fspaneoptx = document.createElement("select");
                 fspaneoptx.id='fspaneoptselectx'
+                fspaneoptx.className = 'opacityLowElemFlood'
                 fspaneoptx.style.position='fixed'
                 fspaneoptx.style.top='20px'
                 fspaneoptx.style.left='0px'
@@ -190,9 +191,10 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
 
                 let fspaneopty = document.createElement("select");
                 fspaneopty.id='fspaneoptselecty'
+                fspaneopty.className = 'opacityLowElemFlood'
                 fspaneopty.style.position='fixed'
                 fspaneopty.style.top='20px'
-                fspaneopty.style.left='40px'
+                fspaneopty.style.left='70px'
                 fspaneopty.style.zIndex='999999'
                 fspaneopty.onchange= (e) => { this.optionChange() }
                 fspane.appendChild(fspaneopty)
@@ -200,15 +202,17 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
 
                 let fspaneoptvol = document.createElement("select");
                 fspaneoptvol.id='fspaneoptselectvol'
+                fspaneoptvol.className = 'opacityLowElemFlood'
                 fspaneoptvol.style.position='fixed'
                 fspaneoptvol.style.top='20px'
-                fspaneoptvol.style.left='80px'
+                fspaneoptvol.style.left='145px'
                 fspaneoptvol.style.zIndex='999999'
                 fspaneoptvol.onchange= (e) => { this.volChange() }
                 fspane.appendChild(fspaneoptvol)
 
                 let optautoadvance = document.createElement("select");
                 optautoadvance.id='fspaneoptselectauto'
+                optautoadvance.className = 'opacityLowElemFlood'
                 optautoadvance.style.position='fixed'
                 optautoadvance.style.top='20px'
                 optautoadvance.style.right='0px'
@@ -229,13 +233,13 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 for(let d=1;d<20;d++){
 
                     let opt1 = document.createElement("option");
-                    opt1.text= d+''
-                    opt1.value= d+''
+                    opt1.text= d+' cols'
+                    opt1.value= d+' cols'
                                               
 
                     let opt2 = document.createElement("option");
-                    opt2.text= d+''
-                    opt2.value= d+''
+                    opt2.text= d+' rows'
+                    opt2.value= d+' rows'
                        
                     if(d==4){
                         opt1.selected = true;
@@ -527,8 +531,8 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
 
         optionChange(){
             let fspane = document.getElementById('fsfullscreencontentflooder')
-            let gridvaluex = document.getElementById('fspaneoptselectx').value
-            let gridvaluey = document.getElementById('fspaneoptselecty').value
+            let gridvaluex = document.getElementById('fspaneoptselectx').value.split(' ')[0]
+            let gridvaluey = document.getElementById('fspaneoptselecty').value.split(' ')[0]
             
             let gx = gridvaluex*1
             let gy = gridvaluey*1
