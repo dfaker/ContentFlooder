@@ -108,6 +108,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             this.cache = []
             this.cacheseen = []
             this.paneindex = 0;
+            this.autoInterval=null;
             this.volume=0;
             this.fullscreen = false;            
             this.styleTemplate = ".opacityElemFlood{opacity:0.2;} .opacityElemFlood:hover{opacity:1.0;}";
@@ -153,12 +154,34 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 fspane.volume=0
                 document.body.appendChild(fspane)
 
+                let bigplayer = document.createElement("video");
+                bigplayer.id="fsvideowrappercontentflooderbigplayer"
+                bigplayer.style.position='fixed'
+                bigplayer.style.top='20px'
+                bigplayer.style.left='0px'
+                bigplayer.style.width='100%'
+                bigplayer.style.height='100%'
+                bigplayer.style.display = 'none'
+                bigplayer.style.zIndex='99999'
+                bigplayer.autoplay=true
+                bigplayer.loop=true
+                bigplayer.volume=0       
+                
+                bigplayer.style.backgroundSize='contain'
+                bigplayer.style.backgroundRepeatX='no-repeat'
+                bigplayer.style.backgroundRepeatY='no-repeat'
+                bigplayer.style.backgroundPosition='center center';
+                bigplayer.addEventListener("click", this.bigplayerhide )
+                bigplayer.addEventListener("wheel", this.bigWheel);
+
+                document.body.appendChild(bigplayer)
+
                 let fspaneoptx = document.createElement("select");
                 fspaneoptx.id='fspaneoptselectx'
                 fspaneoptx.style.position='fixed'
                 fspaneoptx.style.top='20px'
                 fspaneoptx.style.left='0px'
-                fspaneoptx.style.zIndex='999'
+                fspaneoptx.style.zIndex='999999'
                 fspaneoptx.onchange= (e) => { this.optionChange() }
                 fspane.appendChild(fspaneoptx)
 
@@ -167,7 +190,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 fspaneopty.style.position='fixed'
                 fspaneopty.style.top='20px'
                 fspaneopty.style.left='40px'
-                fspaneopty.style.zIndex='999'
+                fspaneopty.style.zIndex='999999'
                 fspaneopty.onchange= (e) => { this.optionChange() }
                 fspane.appendChild(fspaneopty)
 
@@ -177,9 +200,19 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 fspaneoptvol.style.position='fixed'
                 fspaneoptvol.style.top='20px'
                 fspaneoptvol.style.left='80px'
-                fspaneoptvol.style.zIndex='999'
+                fspaneoptvol.style.zIndex='999999'
                 fspaneoptvol.onchange= (e) => { this.volChange() }
                 fspane.appendChild(fspaneoptvol)
+
+                let optautoadvance = document.createElement("select");
+                optautoadvance.id='fspaneoptselectauto'
+                optautoadvance.style.position='fixed'
+                optautoadvance.style.top='20px'
+                optautoadvance.style.right='0px'
+                optautoadvance.style.zIndex='999999'
+                optautoadvance.onchange= (e) => { this.advChange() }
+                fspane.appendChild(optautoadvance)
+
 
                 for(let d=0;d<=100;d+=5){
 
@@ -195,12 +228,29 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                     let opt1 = document.createElement("option");
                     opt1.text= d+''
                     opt1.value= d+''
-                    fspaneoptx.appendChild(opt1)                          
+                                              
 
                     let opt2 = document.createElement("option");
                     opt2.text= d+''
                     opt2.value= d+''
-                    fspaneopty.appendChild(opt2)   
+                       
+                    if(d==4){
+                        opt1.selected = true;
+                        opt2.selected = true;
+                    }
+
+                    fspaneoptx.appendChild(opt1)
+                    fspaneopty.appendChild(opt2)
+
+                    let opt3 = document.createElement("option");
+                    if(d==1){
+                        opt3.text= 'auto off'
+                        opt3.value= 'auto off'
+                    }else{
+                        opt3.text= d-1+' sec'
+                        opt3.value= d-1+' sec'
+                    }
+                    optautoadvance.appendChild(opt3)
                 }
     
   
@@ -356,6 +406,49 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             document.body.addEventListener('keydown', (e) => { this.keyEvent(e) } );
         }
         
+        advance(){
+            console.log('adcance',this.autoInterval)
+
+            const elements = document.getElementsByClassName('cfgridcell');
+            let bigplayer = document.getElementById("fsvideowrappercontentflooderbigplayer")
+
+            let ind = 0
+            for(let i=0;i<elements.length;i++){
+                if(elements[i].src == bigplayer.src && elements[i].style.backgroundImage == bigplayer.style.backgroundImage){
+                    ind = i;
+                    break
+                }
+            }
+            let next = elements[(ind+1)%elements.length]
+            bigplayer.style.backgroundImage=next.style.backgroundImage
+            bigplayer.src=next.src
+        }
+
+        advChange(){
+            let advopt = document.getElementById('fspaneoptselectauto').value;
+            console.log(advopt)
+            let advctime = 0;
+            if(advopt == 'auto off'){
+                advctime = 0;
+                if(this.autoInterval != null){
+                    clearInterval(this.autoInterval);
+                }
+            }else{
+                advctime = advopt.split(' ')[0]*1000.0
+                if(advctime>0){
+                    if(this.autoInterval != null){
+                        clearInterval(this.autoInterval);
+                    }
+                    this.autoInterval = setInterval(this.advance, advctime);
+                }else{
+                    if(this.autoInterval != null){
+                        clearInterval(this.autoInterval);
+                    }
+                }
+            }            
+
+        }
+
         volChange(){
             this.volume = (document.getElementById('fspaneoptselectvol').value.split(' ')[1]*1.0)/100.0
             console.log(this.volume);
@@ -367,6 +460,48 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
 
                 }                          
             }
+        }
+
+        bigWheel(e){
+            const elements = document.getElementsByClassName('cfgridcell');
+            let ind = 0
+            for(let i=0;i<elements.length;i++){
+                if(elements[i].src == e.target.src && elements[i].style.backgroundImage == e.target.style.backgroundImage){
+                    ind = i;
+                    break
+                }
+            }
+            if(event.deltaY && event.deltaY>=0){
+                ind+=1
+            }else{
+                ind-=1
+            }
+
+            if(ind < 0){
+                ind = elements.length-1 
+            }
+            let next = elements[ind%elements.length]
+            let bigplayer = document.getElementById("fsvideowrappercontentflooderbigplayer")
+
+            bigplayer.style.display=''
+            bigplayer.style.backgroundImage=next.style.backgroundImage
+            bigplayer.src=next.src
+
+        }
+
+        bigplayerhide(e){
+            let bigplayer = document.getElementById("fsvideowrappercontentflooderbigplayer")
+            bigplayer.style.display='none'
+            
+        }
+
+        bigplayershow(e){
+            let bigplayer = document.getElementById("fsvideowrappercontentflooderbigplayer")
+            
+            bigplayer.style.display=''
+            bigplayer.style.backgroundImage=e.target.style.backgroundImage
+            bigplayer.src=e.target.src
+
         }
 
         optionChange(){
@@ -400,6 +535,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 vid.style.backgroundRepeatY='no-repeat'
                 vid.style.backgroundPosition='center center';
                 vid.style.opacity='1.0'
+                vid.addEventListener("click", this.bigplayershow )
 
 
                 if(this.cache[(cacheoffset+i)%this.cache.length]){
