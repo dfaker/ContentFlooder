@@ -21,3 +21,5 @@ Copy the file `ContentFlooder.plugin.js` into the BetterDiscord plugins folder, 
 
 
 `CTRL-J` to enable grid mode.
+When in grid mode you an click on an image to make it fullscreen
+When a single image is fullscreened you can scroll the mouse to skip to the next image.
