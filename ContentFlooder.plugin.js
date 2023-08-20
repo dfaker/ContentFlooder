@@ -105,8 +105,11 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             super();
             this.meta = meta;
             this.panes = {};
+            
+            this.currentChannel=0
             this.cache = []
             this.cacheseen = []
+
             this.paneindex = 0;
             this.autoInterval=null;
             this.volume=0;
@@ -162,7 +165,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 bigplayer.style.width='100%'
                 bigplayer.style.height='100%'
                 bigplayer.style.display = 'none'
-                bigplayer.style.zIndex='99999'
+                bigplayer.style.zIndex='999'
                 bigplayer.autoplay=true
                 bigplayer.loop=true
                 bigplayer.volume=0       
@@ -273,7 +276,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
 
                 //console.log('retVal original',retVal.props)
                 
-                console.log(this.isFullscreenMode())
+                console.log(retVal)
 
                 let wrapper = null;
                 if(this.isFullscreenMode()){
@@ -329,6 +332,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
 
                     let seen = [];
                     let nextsrc = null
+                    let ctxm = null;
                     let srctype    = 'video'
                     if(this.isFullscreenMode()){
                         let vi = 0;
@@ -350,30 +354,34 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                         let parts = retVal.props.src.split('?')
                         if(seen.indexOf(parts[0])==-1){
                             nextsrc = parts[0]
+                            ctxm = retVal.props.onContextMenu
                             srctype    = 'video'
                         }
                     }else if (retVal.props.src && retVal.props.src.match(/(webm|mov|mp4)$/)) {
                         if(seen.indexOf(retVal.props.src)==-1){
                             nextsrc = retVal.props.src
+                            ctxm = retVal.props.onContextMenu
                             srctype    = 'video'
                         }                
                     }else if (retVal.props.original && retVal.props.original.match(/(webm|mov|mp4)$/)) {
                         if(seen.indexOf(retVal.props.original)==-1){
                             nextsrc = retVal.props.original
+                            ctxm = retVal.props.onContextMenu
                             srctype    = 'video'
                         }
                     }else if (retVal.props.original && retVal.props.original.match(/(jpg|webp|png|gif|jpeg)$/)) {
                         let urlpart ='url("'+retVal.props.original+'")'
                         if(seen.indexOf(urlpart)==-1){
                             nextsrc = urlpart
+                            ctxm = retVal.props.onContextMenu
                             srctype    = 'img'
                         }
                     }
 
-                    console.log(nextsrc,this.paneindex%gridElements.length)
+                    console.log(nextsrc,this.paneindex%gridElements.length,ctxm)
                     if(nextsrc != null && vid){
                         if(this.cacheseen.indexOf(nextsrc)==-1){
-                            this.cache.push({'src':nextsrc,'type':srctype})
+                            this.cache.push({'src':nextsrc,'type':srctype, 'ctxm':ctxm})
                             this.cacheseen.push(nextsrc)
                         }                       
 
@@ -385,13 +393,17 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                                 vid.style.backgroundRepeatX='no-repeat'
                                 vid.style.backgroundRepeatY='no-repeat'
                                 vid.style.backgroundPosition='center center';
-                                
+
                             }
+                            vid.onContextMenuprop = ctxm
+                            vid.addEventListener("contextmenu", vid.onContextMenuprop);
                             vid.src = '';
                         }else{
                             vid.src = nextsrc;
                             vid.style.display=''                    
                             vid.style.backgroundImage='';
+                            vid.onContextMenuprop = ctxm
+                            vid.addEventListener("contextmenu", vid.onContextMenuprop);
                         }
                     }else{
                         this.paneindex = Math.max(this.paneindex-1,0)
@@ -421,6 +433,8 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             }
             let next = elements[(ind+1)%elements.length]
             bigplayer.style.backgroundImage=next.style.backgroundImage
+            bigplayer.onContextMenuprop = next.onContextMenuprop
+            bigplayer.addEventListener("contextmenu", bigplayer.onContextMenuprop);
             bigplayer.src=next.src
         }
 
@@ -485,12 +499,16 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
 
             bigplayer.style.display=''
             bigplayer.style.backgroundImage=next.style.backgroundImage
+            bigplayer.onContextMenuprop = next.onContextMenuprop
+            bigplayer.addEventListener("contextmenu", bigplayer.onContextMenuprop);
             bigplayer.src=next.src
 
         }
 
         bigplayerhide(e){
             let bigplayer = document.getElementById("fsvideowrappercontentflooderbigplayer")
+            bigplayer.src=''
+            bigplayer.style.backgroundImage=''
             bigplayer.style.display='none'
             
         }
@@ -500,6 +518,9 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             
             bigplayer.style.display=''
             bigplayer.style.backgroundImage=e.target.style.backgroundImage
+            bigplayer.onContextMenuprop = e.target.onContextMenuprop
+            bigplayer.addEventListener("contextmenu", bigplayer.onContextMenuprop);
+
             bigplayer.src=e.target.src
 
         }
@@ -529,6 +550,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 vid.style.padding= '0px'
                 vid.autoplay=true
                 vid.loop=true
+
                 vid.volume=this.volume
                 vid.style.backgroundSize='contain'
                 vid.style.backgroundRepeatX='no-repeat'
@@ -543,8 +565,13 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                     if(entry['type']=='img'){
                         vid.style.backgroundImage = entry['src']
                         vid.src='';
+                        vid.onContextMenuprop = entry['ctxm']
+                        vid.addEventListener("contextmenu", vid.onContextMenuprop);
+
                     }else{
                         vid.src = entry['src']
+                        vid.onContextMenuProp = entry['ctxm']
+                        vid.addEventListener("contextmenu", vid.onContextMenuProp);
                         vid.style.backgroundImage='';
                     }
                 }
@@ -563,8 +590,14 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 if(fspane){
                     if(this.fullscreen){
                         fspane.style.display=''
+                        this.optionChange()
+
                     }else{
                         fspane.style.display='none'
+                        let bigplayer = document.getElementById("fsvideowrappercontentflooderbigplayer")
+                        bigplayer.src=''
+                        bigplayer.style.backgroundImage=''
+                        bigplayer.style.display='none'
                     }
                 }
 
@@ -618,6 +651,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
 
         channelChange() {
             const channel = ChannelStore.getChannel(SelectedChannelStore.getChannelId());
+            this.currentChannel = channel.id
             if (!channel?.id || this.seenChannels.has(channel.id)) return;
             this.seenChannels.add(channel.id);
             BdApi.saveData(this.meta.name, "seen", this.seenChannels);
