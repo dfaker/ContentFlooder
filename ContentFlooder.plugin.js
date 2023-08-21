@@ -79,7 +79,7 @@
     }
 
     module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
-       const plugin = (Plugin, Api) => {
+     const plugin = (Plugin, Api) => {
         const {ContextMenu, DOM, Webpack, Patcher} = window.BdApi;
 
         const SelectedChannelStore = Webpack.getModule(m => m.getCurrentlySelectedChannelId);
@@ -126,235 +126,243 @@
 
                 .zoom-in-out-box {
                   animation: zoom-in-zoom-out 1s ease infinite;
-                }
+              }
 
-                @keyframes zoom-in-zoom-out {
+              @keyframes zoom-in-zoom-out {
                   0% {
-                    transform: scale(0.4, 0.4);
-                  }
-                  50% {
+                    transform: scale(0.2, 0.2);
+                }
+                25% {
                     transform: scale(1.0, 1.0);
-                  }
-                  100% {
-                    transform: scale(0.4, 0.4);
-                  }
+                }
+                50% {
+                    transform: scale(1.0, 1.0);
+                }
+                75% {
+                    transform: scale(1.0, 1.0);
+                }
+                100% {
+                    transform: scale(0.2, 0.2);
+                }
+            }
+
+            `;
+
+            this.channelChange = this.channelChange.bind(this);
+
+            this.advance = this.advance.bind(this);
+            this.bigWheel = this.bigWheel.bind(this);
+
+
+            this.isFullscreenMode = function(){return this.fullscreen};
+
+        }
+
+        isFullscreenMode(){
+            return this.fullscreen
+        }
+
+        onStart() {
+            /** @type {Set<string>} */
+            this.floodedChannels = new Set(BdApi.loadData(this.meta.name, "floodModeOn") ?? []);
+
+            /** @type {Set<string>} */
+            this.lowOpacityChannels = new Set(BdApi.loadData(this.meta.name, "opacityModeOn") ?? []);
+
+            /** @type {Set<string>} */
+            this.bgOverrideChannels = new Set(BdApi.loadData(this.meta.name, "backgroundOverrideModeOn") ?? []);
+
+            /** @type {Set<string>} */
+            this.seenChannels = new Set(BdApi.loadData(this.meta.name, "seen") ?? []);
+
+            this.debouncedupdatevideoGridOffset = _.debounce(this.updatevideoGridOffset,100,{'leading': true})
+
+            this.addStyle();
+
+            let fspane = document.getElementById('fsfullscreencontentflooder')
+
+            if(!fspane){
+                fspane = document.createElement("div");
+                fspane.id="fsfullscreencontentflooder"
+                fspane.style.position='absolute'
+                fspane.style.position='absolute'
+                fspane.style.background='black'
+
+                fspane.style.width='100%'
+                fspane.style.height='100%'
+                fspane.style.top='0'
+                fspane.style.paddingtop='0'
+                fspane.style.zIndex='999'
+                fspane.style.display='none'
+                fspane.style.paddingTop='20px'
+
+                fspane.autoplay=true
+                fspane.loop=true
+                fspane.volume=0
+                document.body.appendChild(fspane)
+
+                fspane.addEventListener("wheel", (e) => { this.debouncedupdatevideoGridOffset(e) });
+
+                let bigplayer = document.createElement("video");
+                bigplayer.id="fsvideowrappercontentflooderbigplayer"
+                bigplayer.style.position='fixed'
+                bigplayer.style.top='20px'
+                bigplayer.style.left='0px'
+                bigplayer.style.width='100%'
+                bigplayer.style.height='100%'
+                bigplayer.style.display = 'none'
+                bigplayer.style.backgroundColor = 'rgba(0,0,0,0.5);'
+                bigplayer.style.zIndex='999'
+                bigplayer.autoplay=true
+                bigplayer.loop=true
+                bigplayer.volume=0       
+
+                bigplayer.style.backgroundSize='contain'
+                bigplayer.style.backgroundRepeatX='no-repeat'
+                bigplayer.style.backgroundRepeatY='no-repeat'
+                bigplayer.style.backgroundPosition='center center';
+                bigplayer.addEventListener("click", (e) => { this.bigplayerhide(e) } )
+                bigplayer.addEventListener("wheel", this.bigWheel);
+
+                document.body.appendChild(bigplayer)
+
+                let fspaneoptx = document.createElement("select");
+                fspaneoptx.id='fspaneoptselectx'
+                fspaneoptx.className = 'opacityLowElemFlood'
+                fspaneoptx.style.position='fixed'
+                fspaneoptx.style.top='20px'
+                fspaneoptx.style.left='0px'
+                fspaneoptx.style.zIndex='999999'
+                fspaneoptx.onchange= (e) => { this.optionChange() }
+                fspane.appendChild(fspaneoptx)
+
+                let fspaneopty = document.createElement("select");
+                fspaneopty.id='fspaneoptselecty'
+                fspaneopty.className = 'opacityLowElemFlood'
+                fspaneopty.style.position='fixed'
+                fspaneopty.style.top='20px'
+                fspaneopty.style.left='70px'
+                fspaneopty.style.zIndex='999999'
+                fspaneopty.onchange= (e) => { this.optionChange() }
+                fspane.appendChild(fspaneopty)
+
+
+                let fspaneoptvol = document.createElement("select");
+                fspaneoptvol.id='fspaneoptselectvol'
+                fspaneoptvol.className = 'opacityLowElemFlood'
+                fspaneoptvol.style.position='fixed'
+                fspaneoptvol.style.top='20px'
+                fspaneoptvol.style.left='145px'
+                fspaneoptvol.style.zIndex='999999'
+                fspaneoptvol.onchange= (e) => { this.volChange() }
+                fspane.appendChild(fspaneoptvol)
+
+                let optautoadvance = document.createElement("select");
+                optautoadvance.id='fspaneoptselectauto'
+                optautoadvance.className = 'opacityLowElemFlood'
+                optautoadvance.style.position='fixed'
+                optautoadvance.style.top='20px'
+                optautoadvance.style.right='0px'
+                optautoadvance.style.zIndex='999999'
+                optautoadvance.onchange= (e) => { this.advChange() }
+                fspane.appendChild(optautoadvance)
+
+
+
+                let optmaxvideos = document.createElement("select");
+                optmaxvideos.id='fspaneoptmaxVideos'
+                optmaxvideos.className = 'opacityLowElemFlood'
+                optmaxvideos.style.position='fixed'
+                optmaxvideos.style.top='20px'
+                optmaxvideos.style.right='76px'
+                optmaxvideos.style.zIndex='999999'
+                optmaxvideos.onchange= (e) => { this.maxvidsChange() }
+                fspane.appendChild(optmaxvideos)
+
+
+                let optoffmaxvid = document.createElement("option");
+                optoffmaxvid.text= 'no max playing limit'
+                optoffmaxvid.value= 'no max playing limit'
+                optmaxvideos.appendChild(optoffmaxvid)
+
+
+                for(let d=0;d<=100;d+=5){
+
+                    let opt1 = document.createElement("option");
+                    opt1.text= 'vol '+d+''
+                    opt1.value= 'vol '+d+''
+                    fspaneoptvol.appendChild(opt1)    
+
                 }
 
-                `;
-                
-                this.channelChange = this.channelChange.bind(this);
 
-                this.advance = this.advance.bind(this);
-
-                this.isFullscreenMode = function(){return this.fullscreen};
-
-            }
-
-            isFullscreenMode(){
-                return this.fullscreen
-            }
-
-            onStart() {
-                /** @type {Set<string>} */
-                this.floodedChannels = new Set(BdApi.loadData(this.meta.name, "floodModeOn") ?? []);
-
-                /** @type {Set<string>} */
-                this.lowOpacityChannels = new Set(BdApi.loadData(this.meta.name, "opacityModeOn") ?? []);
-
-                /** @type {Set<string>} */
-                this.bgOverrideChannels = new Set(BdApi.loadData(this.meta.name, "backgroundOverrideModeOn") ?? []);
-
-                /** @type {Set<string>} */
-                this.seenChannels = new Set(BdApi.loadData(this.meta.name, "seen") ?? []);
-
-                this.debouncedupdatevideoGridOffset = _.debounce(this.updatevideoGridOffset,100,{'leading': true})
-
-                this.addStyle();
-
-                let fspane = document.getElementById('fsfullscreencontentflooder')
-
-                if(!fspane){
-                    fspane = document.createElement("div");
-                    fspane.id="fsfullscreencontentflooder"
-                    fspane.style.position='absolute'
-                    fspane.style.position='absolute'
-                    fspane.style.background='black'
-
-                    fspane.style.width='100%'
-                    fspane.style.height='100%'
-                    fspane.style.top='0'
-                    fspane.style.paddingtop='0'
-                    fspane.style.zIndex='999'
-                    fspane.style.display='none'
-                    fspane.style.paddingTop='20px'
-
-                    fspane.autoplay=true
-                    fspane.loop=true
-                    fspane.volume=0
-                    document.body.appendChild(fspane)
-
-                    fspane.addEventListener("wheel", (e) => { this.debouncedupdatevideoGridOffset(e) });
-
-                    let bigplayer = document.createElement("video");
-                    bigplayer.id="fsvideowrappercontentflooderbigplayer"
-                    bigplayer.style.position='fixed'
-                    bigplayer.style.top='20px'
-                    bigplayer.style.left='0px'
-                    bigplayer.style.width='100%'
-                    bigplayer.style.height='100%'
-                    bigplayer.style.display = 'none'
-                    bigplayer.style.backgroundColor = 'rgba(0,0,0,0.5);'
-                    bigplayer.style.zIndex='999'
-                    bigplayer.autoplay=true
-                    bigplayer.loop=true
-                    bigplayer.volume=0       
-
-                    bigplayer.style.backgroundSize='contain'
-                    bigplayer.style.backgroundRepeatX='no-repeat'
-                    bigplayer.style.backgroundRepeatY='no-repeat'
-                    bigplayer.style.backgroundPosition='center center';
-                    bigplayer.addEventListener("click", (e) => { this.bigplayerhide(e) } )
-                    bigplayer.addEventListener("wheel", this.bigWheel);
-
-                    document.body.appendChild(bigplayer)
-
-                    let fspaneoptx = document.createElement("select");
-                    fspaneoptx.id='fspaneoptselectx'
-                    fspaneoptx.className = 'opacityLowElemFlood'
-                    fspaneoptx.style.position='fixed'
-                    fspaneoptx.style.top='20px'
-                    fspaneoptx.style.left='0px'
-                    fspaneoptx.style.zIndex='999999'
-                    fspaneoptx.onchange= (e) => { this.optionChange() }
-                    fspane.appendChild(fspaneoptx)
-
-                    let fspaneopty = document.createElement("select");
-                    fspaneopty.id='fspaneoptselecty'
-                    fspaneopty.className = 'opacityLowElemFlood'
-                    fspaneopty.style.position='fixed'
-                    fspaneopty.style.top='20px'
-                    fspaneopty.style.left='70px'
-                    fspaneopty.style.zIndex='999999'
-                    fspaneopty.onchange= (e) => { this.optionChange() }
-                    fspane.appendChild(fspaneopty)
+                let optoff = document.createElement("option");
+                optoff.text= 'auto off'
+                optoff.value= 'auto off'
+                optautoadvance.appendChild(optoff)
 
 
-                    let fspaneoptvol = document.createElement("select");
-                    fspaneoptvol.id='fspaneoptselectvol'
-                    fspaneoptvol.className = 'opacityLowElemFlood'
-                    fspaneoptvol.style.position='fixed'
-                    fspaneoptvol.style.top='20px'
-                    fspaneoptvol.style.left='145px'
-                    fspaneoptvol.style.zIndex='999999'
-                    fspaneoptvol.onchange= (e) => { this.volChange() }
-                    fspane.appendChild(fspaneoptvol)
+                for(let d=1;d<10;d+=2){
 
-                    let optautoadvance = document.createElement("select");
-                    optautoadvance.id='fspaneoptselectauto'
-                    optautoadvance.className = 'opacityLowElemFlood'
-                    optautoadvance.style.position='fixed'
-                    optautoadvance.style.top='20px'
-                    optautoadvance.style.right='0px'
-                    optautoadvance.style.zIndex='999999'
-                    optautoadvance.onchange= (e) => { this.advChange() }
-                    fspane.appendChild(optautoadvance)
+                    let opt3 = document.createElement("option");
+                    opt3.text= (d/10.0)+' sec'
+                    opt3.value= (d/10.0)+' sec'
+
+                    optautoadvance.appendChild(opt3)
+
+                }
 
 
+                for(let d=1;d<20;d++){
 
-                    let optmaxvideos = document.createElement("select");
-                    optmaxvideos.id='fspaneoptmaxVideos'
-                    optmaxvideos.className = 'opacityLowElemFlood'
-                    optmaxvideos.style.position='fixed'
-                    optmaxvideos.style.top='20px'
-                    optmaxvideos.style.right='76px'
-                    optmaxvideos.style.zIndex='999999'
-                    optmaxvideos.onchange= (e) => { this.maxvidsChange() }
-                    fspane.appendChild(optmaxvideos)
+                    let opt1 = document.createElement("option");
+                    opt1.text= d+' cols'
+                    opt1.value= d+' cols'
 
 
-                    let optoffmaxvid = document.createElement("option");
-                    optoffmaxvid.text= 'no max playing limit'
-                    optoffmaxvid.value= 'no max playing limit'
-                    optmaxvideos.appendChild(optoffmaxvid)
+                    let maxvid = document.createElement("option");
+                    maxvid.text= d+' max playing'
+                    maxvid.value= d+' max playing'
+                    if(d==3){
+                        maxvid.selected = true;
+                    }
+                    optmaxvideos.appendChild(maxvid)
 
 
-                    for(let d=0;d<=100;d+=5){
+                    let opt2 = document.createElement("option");
+                    opt2.text= d+' rows'
+                    opt2.value= d+' rows'
 
-                        let opt1 = document.createElement("option");
-                        opt1.text= 'vol '+d+''
-                        opt1.value= 'vol '+d+''
-                        fspaneoptvol.appendChild(opt1)    
-
+                    if(d==4){
+                        opt1.selected = true;
+                        opt2.selected = true;
                     }
 
-
-                    let optoff = document.createElement("option");
-                    optoff.text= 'auto off'
-                    optoff.value= 'auto off'
-                    optautoadvance.appendChild(optoff)
-
-
-                    for(let d=1;d<10;d+=2){
-
+                    fspaneoptx.appendChild(opt1)
+                    fspaneopty.appendChild(opt2)
+                    if(d>1){
                         let opt3 = document.createElement("option");
-                            opt3.text= (d/10.0)+' sec'
-                            opt3.value= (d/10.0)+' sec'
-                        
+                        opt3.text= d-1+' sec'
+                        opt3.value= d-1+' sec'
                         optautoadvance.appendChild(opt3)
-
                     }
-
-
-                    for(let d=1;d<20;d++){
-
-                        let opt1 = document.createElement("option");
-                        opt1.text= d+' cols'
-                        opt1.value= d+' cols'
-
-
-                        let maxvid = document.createElement("option");
-                        maxvid.text= d+' max playing'
-                        maxvid.value= d+' max playing'
-                        if(d==3){
-                            maxvid.selected = true;
-                        }
-                        optmaxvideos.appendChild(maxvid)
-
-
-                        let opt2 = document.createElement("option");
-                        opt2.text= d+' rows'
-                        opt2.value= d+' rows'
-
-                        if(d==4){
-                            opt1.selected = true;
-                            opt2.selected = true;
-                        }
-
-                        fspaneoptx.appendChild(opt1)
-                        fspaneopty.appendChild(opt2)
-                        if(d>1){
-                            let opt3 = document.createElement("option");
-                            opt3.text= d-1+' sec'
-                            opt3.value= d-1+' sec'
-                            optautoadvance.appendChild(opt3)
-                        }
-                    }
-
-                    fspane.appendChild(fspaneoptx)
-                    fspane.appendChild(fspaneopty)
-                    this.optionChange()
-
                 }
 
+                fspane.appendChild(fspaneoptx)
+                fspane.appendChild(fspaneopty)
+                this.optionChange()
 
-                Patcher.after(this.meta.name, InlineMediaWrapper.prototype, "render", (thisObject, _, retVal) => {
-                    const channel = ChannelStore.getChannel(SelectedChannelStore.getChannelId());
-                    if (!this.isFlooding(channel)) return;
+            }
 
-                    if (this.isLowOpacity(channel)){
-                        if (retVal.props.className) retVal.props.className = retVal.props.className + " opacityElemFlood";
-                        else retVal.props.className = "opacityElemFlood";                    
-                    }                
+
+            Patcher.after(this.meta.name, InlineMediaWrapper.prototype, "render", (thisObject, _, retVal) => {
+                const channel = ChannelStore.getChannel(SelectedChannelStore.getChannelId());
+                if (!this.isFlooding(channel)) return;
+
+                if (this.isLowOpacity(channel)){
+                    if (retVal.props.className) retVal.props.className = retVal.props.className + " opacityElemFlood";
+                    else retVal.props.className = "opacityElemFlood";                    
+                }                
 
                 let wrapper = null;
                 if(this.isFullscreenMode()){
@@ -478,48 +486,50 @@
                         if(chacheseen.indexOf(nextsrc)==-1){
                             chache.push({'src':nextsrc,'type':srctype, 'ctxm':ctxm, 'thumb':thumb})
                             chacheseen.push(nextsrc)
-                        }                       
+                            
+                            if(this.isFullscreenMode() || this.isBGOverride(channel)){
 
-                        if(this.isFullscreenMode() || this.isBGOverride(channel)){
+                                console.log('nextsrc',nextsrc)
+                                if(srctype=='img'){
+                                    vid.style.backgroundImage = nextsrc
+                                    if(!this.isFullscreenMode()){
+                                        vid.style.backgroundAttachment='fixed'
+                                        vid.style.backgroundSize='contain'
+                                        vid.style.backgroundRepeatX='no-repeat'
+                                        vid.style.backgroundRepeatY='no-repeat'
+                                        vid.style.backgroundPosition='center center';
 
-                            if(srctype=='img'){
-                                vid.style.backgroundImage = nextsrc
-                                if(!this.isFullscreenMode()){
-                                    vid.style.backgroundAttachment='fixed'
-                                    vid.style.backgroundSize='contain'
-                                    vid.style.backgroundRepeatX='no-repeat'
-                                    vid.style.backgroundRepeatY='no-repeat'
-                                    vid.style.backgroundPosition='center center';
+                                    }
+                                    if(vid.onContextMenuprop){
+                                        vid.removeEventListener("contextmenu", vid.onContextMenuprop)
+                                    }
+                                    vid.onContextMenuprop = ctxm
+                                    vid.addEventListener("contextmenu", vid.onContextMenuprop);
+                                    vid.src = '';
+                                    vid.origsrc=null;
+                                    videoadded = true;
+                                }else{
+                                    vid.src = nextsrc;
+                                    vid.origsrc=nextsrc;
+                                    vid.style.display=''                    
 
+                                    vid.style.backgroundImage='';
+                                    if(thumb){
+                                        vid.style.backgroundImage=thumb;
+                                        vid.thumb=thumb
+                                    }
+
+                                    if(vid.onContextMenuprop){
+                                        vid.removeEventListener("contextmenu", vid.onContextMenuprop)
+                                    }
+                                    vid.onContextMenuprop = ctxm
+                                    vid.addEventListener("contextmenu", vid.onContextMenuprop);
+                                    videoadded=true;
                                 }
-                                if(vid.onContextMenuprop){
-                                    vid.removeEventListener("contextmenu", vid.onContextMenuprop)
-                                }
-                                vid.onContextMenuprop = ctxm
-                                vid.addEventListener("contextmenu", vid.onContextMenuprop);
-                                vid.src = '';
-                                vid.origsrc=null;
-                                videoadded = true;
                             }else{
-                                vid.src = nextsrc;
-                                vid.origsrc=nextsrc;
-                                vid.style.display=''                    
-                                
-                                vid.style.backgroundImage='';
-                                if(thumb){
-                                    vid.style.backgroundImage=thumb;
-                                    vid.thumb=thumb
-                                }
-
-                                if(vid.onContextMenuprop){
-                                    vid.removeEventListener("contextmenu", vid.onContextMenuprop)
-                                }
-                                vid.onContextMenuprop = ctxm
-                                vid.addEventListener("contextmenu", vid.onContextMenuprop);
-                                videoadded=true;
+                                this.paneindex = Math.max(this.paneindex-1,0)
                             }
-                        }else{
-                            this.paneindex = Math.max(this.paneindex-1,0)
+
                         }
                     } else {
                         this.paneindex = Math.max(this.paneindex-1,0)
@@ -541,41 +551,49 @@ document.body.addEventListener('keydown', (e) => { this.keyEvent(e) } );
 }
 
 advance(){
-        const elements = document.getElementsByClassName('cfgridcell');
-        
-        let bigplayer = document.getElementById("fsvideowrappercontentflooderbigplayer")
+    const elements = document.getElementsByClassName('cfgridcell');
 
-        if(bigplayer.style.display == ''){
-            let ind = 0
-            for(let i=0;i<elements.length;i++){
-                if( (elements[i].src == bigplayer.src || elements[i].origsrc == bigplayer.src) && elements[i].style.backgroundImage == bigplayer.style.backgroundImage){
-                    ind = i;
-                    break
-                }
-            }
-            let next = elements[(ind+1)%elements.length]
-            bigplayer.style.backgroundImage=next.style.backgroundImage
-            if(bigplayer.onContextMenuprop){
-                bigplayer.removeEventListener("contextmenu", bigplayer.onContextMenuprop)
-            }
-            bigplayer.onContextMenuprop = next.onContextMenuprop
-            bigplayer.addEventListener("contextmenu", bigplayer.onContextMenuprop);
+    let gridvaluex = document.getElementById('fspaneoptselectx').value.split(' ')[0]
+    let gridvaluey = document.getElementById('fspaneoptselecty').value.split(' ')[0]
 
-            if(next.origsrc != null){
-                bigplayer.src=next.origsrc    
-            }else{
-                bigplayer.src=next.src
-            }
+    let gx = gridvaluex*1
+    let gy = gridvaluey*1
 
-            if( ((ind+1)%elements.length)==0 ){
-                this.updatevideoGridOffset(1)
-            }
+    let bigplayer = document.getElementById("fsvideowrappercontentflooderbigplayer")
 
+    let ind = 0
+    if(bigplayer.style.display == ''){
+
+        for(let i=0;i<elements.length;i++){
+            if( (elements[i].src == bigplayer.src || elements[i].origsrc == bigplayer.src) && elements[i].style.backgroundImage == bigplayer.style.backgroundImage){
+                ind = i;
+                break
+            }
         }
+        let next = elements[(ind+1)%elements.length]
+        bigplayer.style.backgroundImage=next.style.backgroundImage
+        if(bigplayer.onContextMenuprop){
+            bigplayer.removeEventListener("contextmenu", bigplayer.onContextMenuprop)
+        }
+        bigplayer.onContextMenuprop = next.onContextMenuprop
+        bigplayer.addEventListener("contextmenu", bigplayer.onContextMenuprop);
+
+        if(next.origsrc != null){
+            bigplayer.src=next.origsrc    
+        }else{
+            bigplayer.src=next.src
+        }
+
+    }
+    if(ind == (elements.length-1)){
+        for(let i=0;i<(gx*gy);i++){
+            this.updatevideoGridOffset(1)
+        }
+    }
 }
 
 maxvidsChange(){
-     
+
 
     let maxplay = document.getElementById('fspaneoptmaxVideos').value;
     if(maxplay == 'no max playing limit'){
@@ -650,9 +668,10 @@ updatevideoGridOffset(e){
         this.chache[this.currentChannel] = chache
     }
 
+    let lasti = 0
     for(let i=0;i<elements.length;i++){
         let vid = elements[i]
-
+        lasti=i;
 
         if(chache[(this.cacheoffset+i)%chache.length]){
             let entry = chache[(this.cacheoffset+i)%chache.length];
@@ -693,6 +712,13 @@ updatevideoGridOffset(e){
 
 bigWheel(e){
     e.preventDefault();
+
+    let gridvaluex = document.getElementById('fspaneoptselectx').value.split(' ')[0]
+    let gridvaluey = document.getElementById('fspaneoptselecty').value.split(' ')[0]
+
+    let gx = gridvaluex*1
+    let gy = gridvaluey*1
+
     const elements = document.getElementsByClassName('cfgridcell');
     let ind = 0
     for(let i=0;i<elements.length;i++){
@@ -725,6 +751,11 @@ bigWheel(e){
         bigplayer.src=next.origsrc    
     }else{
         bigplayer.src=next.src
+    }
+    if(ind == (elements.length-1)){
+        for(let i=0;i<(gx*gy);i++){
+            this.updatevideoGridOffset(1)
+        }
     }
 
     
@@ -765,6 +796,7 @@ bigplayershow(e){
 }
 
 optionChange(){
+    console.log('optionChange')
     let fspane = document.getElementById('fsfullscreencontentflooder')
     let gridvaluex = document.getElementById('fspaneoptselectx').value.split(' ')[0]
     let gridvaluey = document.getElementById('fspaneoptselecty').value.split(' ')[0]
@@ -806,10 +838,7 @@ optionChange(){
         vid.style.opacity='1.0'
         vid.addEventListener("click", this.bigplayershow )
 
-
         vid.addEventListener("wheel", (e) => { this.debouncedupdatevideoGridOffset(e) });
-
-
 
         if(chache[(this.cacheoffset+i)%chache.length]){
             let entry = chache[(this.cacheoffset+i)%chache.length];
@@ -870,7 +899,7 @@ applypauserule(){
                     ((gridElements[vi].origsrc && gridElements[vi].origsrc.length && gridElements[vi].origsrc.length > 0)))
 
                 ){
-                
+
                 if(gridElements[vi].origsrc != null){
                     gridElements[vi].src = ''
                 }
@@ -886,7 +915,7 @@ applypauserule(){
         }
 
         for(let i=0;i< Math.min(paused.length,this.maximumplayingvideos);i++){
-            
+
             if(paused[i].origsrc != null){
                 paused[i].autoplay=true
                 paused[i].src = paused[i].origsrc;
