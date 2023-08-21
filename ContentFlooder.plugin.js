@@ -120,6 +120,7 @@
                 this.styleTemplate = ".opacityElemFlood{opacity:0.2;} .opacityElemFlood:hover{opacity:1.0;} .opacityLowElemFlood{opacity:0.5;} .opacityLowElemFlood:hover{opacity:1.0;}";
                 this.channelChange = this.channelChange.bind(this);
                 this.isFullscreenMode = function(){return this.fullscreen};
+
             }
 
             isFullscreenMode(){
@@ -136,9 +137,10 @@
                 /** @type {Set<string>} */
                 this.bgOverrideChannels = new Set(BdApi.loadData(this.meta.name, "backgroundOverrideModeOn") ?? []);
 
-
                 /** @type {Set<string>} */
                 this.seenChannels = new Set(BdApi.loadData(this.meta.name, "seen") ?? []);
+
+                this.debouncedupdatevideoGridOffset = _.debounce(this.updatevideoGridOffset,100,{'leading': true})
 
                 this.addStyle();
 
@@ -162,7 +164,8 @@
                     fspane.loop=true
                     fspane.volume=0
                     document.body.appendChild(fspane)
-                    fspane.addEventListener("wheel", (e) => { this.updatevideoGridOffset(e) });
+
+                    fspane.addEventListener("wheel", (e) => { this.debouncedupdatevideoGridOffset(e) });
 
                     let bigplayer = document.createElement("video");
                     bigplayer.id="fsvideowrappercontentflooderbigplayer"
@@ -590,11 +593,12 @@ volChange(){
     bigplayer.volume = this.volume;    
 }
 
+
 updatevideoGridOffset(e){
     e.preventDefault();
     const elements = document.getElementsByClassName('cfgridcell');
     
-    if(event.deltaY && event.deltaY>=0){
+    if(e.deltaY && e.deltaY>=0){
         this.cacheoffset =  Math.max(this.cacheoffset+1,0);
     }else{
         this.cacheoffset =  Math.max(this.cacheoffset-1,0);
@@ -662,7 +666,7 @@ bigWheel(e){
             break
         }
     }
-    if(event.deltaY && event.deltaY>=0){
+    if(e.deltaY && e.deltaY>=0){
         ind+=1
     }else{
         ind-=1
@@ -766,7 +770,9 @@ optionChange(){
         vid.style.backgroundPosition='center center';
         vid.style.opacity='1.0'
         vid.addEventListener("click", this.bigplayershow )
-        vid.addEventListener("wheel", (e) => { this.updatevideoGridOffset(e) });
+
+
+        vid.addEventListener("wheel", (e) => { this.debouncedupdatevideoGridOffset(e) });
 
 
 
