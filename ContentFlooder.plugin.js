@@ -517,7 +517,7 @@ advance(){
         if(bigplayer.style.display == ''){
             let ind = 0
             for(let i=0;i<elements.length;i++){
-                if(elements[i].src == bigplayer.src && elements[i].style.backgroundImage == bigplayer.style.backgroundImage){
+                if( (elements[i].src == bigplayer.src || elements[i].origsrc == bigplayer.src) && elements[i].style.backgroundImage == bigplayer.style.backgroundImage){
                     ind = i;
                     break
                 }
@@ -529,7 +529,13 @@ advance(){
             }
             bigplayer.onContextMenuprop = next.onContextMenuprop
             bigplayer.addEventListener("contextmenu", bigplayer.onContextMenuprop);
-            bigplayer.src=next.src
+
+            if(next.origsrc != null){
+                bigplayer.src=next.origsrc    
+            }else{
+                bigplayer.src=next.src
+            }
+
         }
 }
 
@@ -651,7 +657,7 @@ bigWheel(e){
     const elements = document.getElementsByClassName('cfgridcell');
     let ind = 0
     for(let i=0;i<elements.length;i++){
-        if(elements[i].src == e.target.src && elements[i].style.backgroundImage == e.target.style.backgroundImage){
+        if(  (elements[i].src == e.target.src || elements[i].origsrc == e.target.src)   && elements[i].style.backgroundImage == e.target.style.backgroundImage){
             ind = i;
             break
         }
@@ -675,7 +681,14 @@ bigWheel(e){
     }
     bigplayer.onContextMenuprop = next.onContextMenuprop
     bigplayer.addEventListener("contextmenu", bigplayer.onContextMenuprop);
-    bigplayer.src=next.src
+
+    if(next.origsrc != null){
+        bigplayer.src=next.origsrc    
+    }else{
+        bigplayer.src=next.src
+    }
+
+    
 
 }
 
@@ -809,8 +822,17 @@ applypauserule(){
     if(videoCount > this.maximumplayingvideos){
         let paused = []
         for(vi in gridElements){
-            if(gridElements[vi] && gridElements[vi].src && gridElements[vi].src.length && gridElements[vi].src.length > 0){
-                gridElements[vi].pause()
+            if(gridElements[vi] && 
+
+                ((gridElements[vi].src && gridElements[vi].src.length && gridElements[vi].src.length > 0)
+                    ||
+                    ((gridElements[vi].origsrc && gridElements[vi].origsrc.length && gridElements[vi].origsrc.length > 0)))
+
+                ){
+                
+                if(gridElements[vi].origsrc != null){
+                    gridElements[vi].src = ''
+                }
                 paused.push(gridElements[vi]);
             }                          
         }
@@ -823,7 +845,12 @@ applypauserule(){
         }
 
         for(let i=0;i< Math.min(paused.length,this.maximumplayingvideos);i++){
-            paused[i].play()
+            
+            if(paused[i].origsrc != null){
+                paused[i].autoplay=true
+                paused[i].src = paused[i].origsrc;
+            }
+            
         }
 
     }else{
