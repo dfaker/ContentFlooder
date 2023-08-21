@@ -117,8 +117,35 @@
                 this.autoInterval=null;
                 this.volume=0;
                 this.fullscreen = false;
-                this.styleTemplate = ".opacityElemFlood{opacity:0.2;} .opacityElemFlood:hover{opacity:1.0;} .opacityLowElemFlood{opacity:0.5;} .opacityLowElemFlood:hover{opacity:1.0;}";
+                this.styleTemplate = `
+                .opacityElemFlood{opacity:0.2;} 
+                .opacityElemFlood:hover{opacity:1.0;} 
+                .opacityLowElemFlood{opacity:0.5;} 
+                .opacityLowElemFlood:hover{opacity:1.0;}
+                .opacityLowElemFlood:hover{opacity:1.0;}
+
+                .zoom-in-out-box {
+                  animation: zoom-in-zoom-out 1s ease infinite;
+                }
+
+                @keyframes zoom-in-zoom-out {
+                  0% {
+                    transform: scale(0.4, 0.4);
+                  }
+                  50% {
+                    transform: scale(1.0, 1.0);
+                  }
+                  100% {
+                    transform: scale(0.4, 0.4);
+                  }
+                }
+
+                `;
+                
                 this.channelChange = this.channelChange.bind(this);
+
+                this.advance = this.advance.bind(this);
+
                 this.isFullscreenMode = function(){return this.fullscreen};
 
             }
@@ -152,6 +179,7 @@
                     fspane.style.position='absolute'
                     fspane.style.position='absolute'
                     fspane.style.background='black'
+
                     fspane.style.width='100%'
                     fspane.style.height='100%'
                     fspane.style.top='0'
@@ -175,6 +203,7 @@
                     bigplayer.style.width='100%'
                     bigplayer.style.height='100%'
                     bigplayer.style.display = 'none'
+                    bigplayer.style.backgroundColor = 'rgba(0,0,0,0.5);'
                     bigplayer.style.zIndex='999'
                     bigplayer.autoplay=true
                     bigplayer.loop=true
@@ -310,8 +339,6 @@
                             optautoadvance.appendChild(opt3)
                         }
                     }
-
-
 
                     fspane.appendChild(fspaneoptx)
                     fspane.appendChild(fspaneopty)
@@ -515,6 +542,7 @@ document.body.addEventListener('keydown', (e) => { this.keyEvent(e) } );
 
 advance(){
         const elements = document.getElementsByClassName('cfgridcell');
+        
         let bigplayer = document.getElementById("fsvideowrappercontentflooderbigplayer")
 
         if(bigplayer.style.display == ''){
@@ -537,6 +565,10 @@ advance(){
                 bigplayer.src=next.origsrc    
             }else{
                 bigplayer.src=next.src
+            }
+
+            if( ((ind+1)%elements.length)==0 ){
+                this.updatevideoGridOffset(1)
             }
 
         }
@@ -595,10 +627,13 @@ volChange(){
 
 
 updatevideoGridOffset(e){
-    e.preventDefault();
+    if(e.preventDefault){
+        e.preventDefault();    
+    }
+    
     const elements = document.getElementsByClassName('cfgridcell');
     
-    if(e.deltaY && e.deltaY>=0){
+    if((e.deltaY && e.deltaY>=0) || e>0){
         this.cacheoffset =  Math.max(this.cacheoffset+1,0);
     }else{
         this.cacheoffset =  Math.max(this.cacheoffset-1,0);
@@ -871,6 +906,17 @@ applypauserule(){
 }
 
 keyEvent(e){
+    if(e.ctrlKey && e.key=='h'){
+        let bigplayer = document.getElementById("fsvideowrappercontentflooderbigplayer")
+        if(bigplayer.className == 'zoom-in-out-box'){
+            bigplayer.className = ''
+            document.exitFullscreen()
+        }else{
+            bigplayer.className = 'zoom-in-out-box'
+            document.documentElement.requestFullscreen()
+        }
+
+    }
     if(e.ctrlKey && e.key=='j'){
         this.fullscreen = !this.fullscreen;
         let fspane = document.getElementById('fsfullscreencontentflooder')
