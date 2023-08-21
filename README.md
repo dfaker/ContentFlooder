@@ -17,7 +17,7 @@ Sets Last Posted Discord Image or Video As Channel Background
 
 Copy the file `ContentFlooder.plugin.js` into the BetterDiscord plugins folder, and enable for a channel with the right click menu:
 
-![image](https://github.com/dfaker/ContentFlooder/assets/35278260/d53e4df1-1ca3-45c5-ba79-617003b3c1d9)
+![image](https://github.com/dfaker/ContentFlooder/assets/35278260/d802c5c2-48b0-4fe3-aa60-68cefc8377ab)
 
 
 `CTRL-J` to enable grid mode.
