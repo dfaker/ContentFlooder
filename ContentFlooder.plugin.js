@@ -181,7 +181,7 @@
                     bigplayer.style.backgroundRepeatX='no-repeat'
                     bigplayer.style.backgroundRepeatY='no-repeat'
                     bigplayer.style.backgroundPosition='center center';
-                    bigplayer.addEventListener("click", this.bigplayerhide )
+                    bigplayer.addEventListener("click", (e) => { this.bigplayerhide(e) } )
                     bigplayer.addEventListener("wheel", this.bigWheel);
 
                     document.body.appendChild(bigplayer)
@@ -228,6 +228,24 @@
                     fspane.appendChild(optautoadvance)
 
 
+
+                    let optmaxvideos = document.createElement("select");
+                    optmaxvideos.id='fspaneoptmaxVideos'
+                    optmaxvideos.className = 'opacityLowElemFlood'
+                    optmaxvideos.style.position='fixed'
+                    optmaxvideos.style.top='20px'
+                    optmaxvideos.style.right='76px'
+                    optmaxvideos.style.zIndex='999999'
+                    optmaxvideos.onchange= (e) => { this.maxvidsChange() }
+                    fspane.appendChild(optmaxvideos)
+
+
+                    let optoffmaxvid = document.createElement("option");
+                    optoffmaxvid.text= 'no max playing limit'
+                    optoffmaxvid.value= 'no max playing limit'
+                    optmaxvideos.appendChild(optoffmaxvid)
+
+
                     for(let d=0;d<=100;d+=5){
 
                         let opt1 = document.createElement("option");
@@ -260,6 +278,15 @@
                         let opt1 = document.createElement("option");
                         opt1.text= d+' cols'
                         opt1.value= d+' cols'
+
+
+                        let maxvid = document.createElement("option");
+                        maxvid.text= d+' max playing'
+                        maxvid.value= d+' max playing'
+                        if(d==3){
+                            maxvid.selected = true;
+                        }
+                        optmaxvideos.appendChild(maxvid)
 
 
                         let opt2 = document.createElement("option");
@@ -297,10 +324,7 @@
                     if (this.isLowOpacity(channel)){
                         if (retVal.props.className) retVal.props.className = retVal.props.className + " opacityElemFlood";
                         else retVal.props.className = "opacityElemFlood";                    
-                    }
-
-                //console.log('retVal original',retVal.props)
-                
+                    }                
 
                 let wrapper = null;
                 if(this.isFullscreenMode()){
@@ -357,6 +381,7 @@
                     let seen = [];
                     let nextsrc = null
                     let ctxm = null;
+                    let thumb = null;
                     let srctype    = 'video'
                     if(this.isFullscreenMode()){
                         let vi = 0;
@@ -378,6 +403,7 @@
                         let parts = retVal.props.src.split('?')
                         if(seen.indexOf(parts[0])==-1){
                             nextsrc = parts[0]
+                            thumb = 'url("'+retVal.props.src+'")'
                             ctxm = retVal.props.onContextMenu
                             srctype    = 'video'
                         }
@@ -402,7 +428,6 @@
                         }
                     }
 
-                    console.log(nextsrc,this.paneindex%gridElements.length,ctxm)
                     let videoadded=false;
                     if(nextsrc != null && vid){
 
@@ -414,8 +439,6 @@
 
                         }
 
-                        console.log(this.currentChannel,chache)
-
                         if(!chacheseen){
                             chacheseen = []
                             this.cacheseen[this.currentChannel] = chacheseen
@@ -423,7 +446,7 @@
                         }
 
                         if(chacheseen.indexOf(nextsrc)==-1){
-                            chache.push({'src':nextsrc,'type':srctype, 'ctxm':ctxm})
+                            chache.push({'src':nextsrc,'type':srctype, 'ctxm':ctxm, 'thumb':thumb})
                             chacheseen.push(nextsrc)
                         }                       
 
@@ -445,11 +468,19 @@
                                 vid.onContextMenuprop = ctxm
                                 vid.addEventListener("contextmenu", vid.onContextMenuprop);
                                 vid.src = '';
+                                vid.origsrc=null;
                                 videoadded = true;
                             }else{
                                 vid.src = nextsrc;
+                                vid.origsrc=nextsrc;
                                 vid.style.display=''                    
+                                
                                 vid.style.backgroundImage='';
+                                if(thumb){
+                                    vid.style.backgroundImage=thumb;
+                                    vid.thumb=thumb
+                                }
+
                                 if(vid.onContextMenuprop){
                                     vid.removeEventListener("contextmenu", vid.onContextMenuprop)
                                 }
@@ -502,9 +533,22 @@ advance(){
         }
 }
 
+maxvidsChange(){
+     
+
+    let maxplay = document.getElementById('fspaneoptmaxVideos').value;
+    if(maxplay == 'no max playing limit'){
+        this.maximumplayingvideos=99999;
+    }else{
+        this.maximumplayingvideos = maxplay.split(' ')[0]*1
+    }
+
+    this.applypauserule()
+
+}
+
 advChange(){
     let advopt = document.getElementById('fspaneoptselectauto').value;
-    console.log(advopt)
     let advctime = 0;
     if(advopt == 'auto off'){
         advctime = 0;
@@ -524,12 +568,10 @@ advChange(){
             }
         }
     }            
-
 }
 
 volChange(){
     this.volume = (document.getElementById('fspaneoptselectvol').value.split(' ')[1]*1.0)/100.0
-    console.log(this.volume);
     let gridElements = document.getElementsByClassName('cfgridcell') 
     let vi = 0;
     for(vi in gridElements){
@@ -538,9 +580,12 @@ volChange(){
 
         }                          
     }
+    let bigplayer = document.getElementById("fsvideowrappercontentflooderbigplayer")
+    bigplayer.volume = this.volume;    
 }
 
 updatevideoGridOffset(e){
+    e.preventDefault();
     const elements = document.getElementsByClassName('cfgridcell');
     
     if(event.deltaY && event.deltaY>=0){
@@ -548,6 +593,8 @@ updatevideoGridOffset(e){
     }else{
         this.cacheoffset =  Math.max(this.cacheoffset-1,0);
     }
+
+    console.log(this.cacheoffset)
 
     let chache = []
 
@@ -567,6 +614,7 @@ updatevideoGridOffset(e){
             if(entry['type']=='img'){
                 vid.style.backgroundImage = entry['src']
                 vid.src='';
+                vid.origsrc=null;
                 if(vid.onContextMenuprop){
                     vid.removeEventListener("contextmenu", vid.onContextMenuprop)
                 }
@@ -575,12 +623,21 @@ updatevideoGridOffset(e){
 
             }else{
                 vid.src = entry['src']
+                vid.origsrc=entry['src']
                 if(vid.onContextMenuprop){
                     vid.removeEventListener("contextmenu", vid.onContextMenuprop)
                 }
                 vid.onContextMenuProp = entry['ctxm']
+
                 vid.addEventListener("contextmenu", vid.onContextMenuProp);
-                vid.style.backgroundImage='';
+                if(entry['thumb'] != null){
+                    vid.style.backgroundImage=entry['thumb'];
+                    vid.thumb=entry['thumb'];
+                }else{
+                    vid.style.backgroundImage='';    
+                    vid.thumb=null;
+                }
+                
             }
         }
     }
@@ -590,6 +647,7 @@ updatevideoGridOffset(e){
 }
 
 bigWheel(e){
+    e.preventDefault();
     const elements = document.getElementsByClassName('cfgridcell');
     let ind = 0
     for(let i=0;i<elements.length;i++){
@@ -627,7 +685,6 @@ bigplayerhide(e){
     bigplayer.style.backgroundImage=''
     bigplayer.style.display='none'
     this.applypauserule()
-
 }
 
 bigplayershow(e){
@@ -641,8 +698,12 @@ bigplayershow(e){
     bigplayer.onContextMenuprop = e.target.onContextMenuprop
     bigplayer.addEventListener("contextmenu", bigplayer.onContextMenuprop);
 
-    bigplayer.src=e.target.src
-
+    if(e.target.origsrc){
+        bigplayer.src=e.target.origsrc    
+    }else{
+        bigplayer.src=e.target.src
+    }
+    
     const elements = document.getElementsByClassName('cfgridcell');
     for(let i=0;i<elements.length;i++){
         elements[i].pause()
@@ -658,7 +719,6 @@ optionChange(){
 
     let gx = gridvaluex*1
     let gy = gridvaluey*1
-    console.log(gx,gy)
 
     const elements = document.getElementsByClassName('cfgridcell');
     while(elements.length > 0){
@@ -702,6 +762,8 @@ optionChange(){
             if(entry['type']=='img'){
                 vid.style.backgroundImage = entry['src']
                 vid.src='';
+                vid.origsrc=null;
+
                 if(vid.onContextMenuprop){
                     vid.removeEventListener("contextmenu", vid.onContextMenuprop)
                 }
@@ -710,12 +772,20 @@ optionChange(){
 
             }else{
                 vid.src = entry['src']
+                vid.origsrc=entry['src']
                 if(vid.onContextMenuprop){
                     vid.removeEventListener("contextmenu", vid.onContextMenuprop)
                 }
                 vid.onContextMenuProp = entry['ctxm']
                 vid.addEventListener("contextmenu", vid.onContextMenuProp);
-                vid.style.backgroundImage='';
+                
+                if(entry['thumb'] != null){
+                    vid.style.backgroundImage=entry['thumb'];
+                    vid.thumb=entry['thumb']
+                }else{
+                    vid.style.backgroundImage='';
+                    vid.thumb=null;    
+                }
             }
         }
 
@@ -737,11 +807,25 @@ applypauserule(){
         }                          
     }
     if(videoCount > this.maximumplayingvideos){
+        let paused = []
         for(vi in gridElements){
             if(gridElements[vi] && gridElements[vi].src && gridElements[vi].src.length && gridElements[vi].src.length > 0){
                 gridElements[vi].pause()
+                paused.push(gridElements[vi]);
             }                          
         }
+
+        for (var i = paused.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var temp = paused[i];
+            paused[i] = paused[j];
+            paused[j] = temp;
+        }
+
+        for(let i=0;i< Math.min(paused.length,this.maximumplayingvideos);i++){
+            paused[i].play()
+        }
+
     }else{
         for(let i=0;i<gridElements.length;i++){
             if(gridElements[i] && gridElements[i].play){
@@ -755,9 +839,7 @@ applypauserule(){
 
 keyEvent(e){
     if(e.ctrlKey && e.key=='j'){
-        console.log('this.fullscreen',this.fullscreen)
         this.fullscreen = !this.fullscreen;
-        console.log('this.fullscreen',e,this.fullscreen)
         let fspane = document.getElementById('fsfullscreencontentflooder')
         if(fspane){
             if(this.fullscreen){
@@ -771,7 +853,6 @@ keyEvent(e){
                 bigplayer.src=''
                 bigplayer.style.backgroundImage=''
                 bigplayer.style.display='none'
-
 
                 const elements = document.getElementsByClassName('cfgridcell');
                 for(let i=0;i<elements.length;i++){
@@ -851,7 +932,6 @@ removeLowOpacity(channel) {
 
 channelChange() {
     const channel = ChannelStore.getChannel(SelectedChannelStore.getChannelId());
-    console.log('channel.id',channel.id)
     this.currentChannel = channel.id
     if (!channel?.id || this.seenChannels.has(channel.id)) return;
     this.seenChannels.add(channel.id);
