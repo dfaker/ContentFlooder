@@ -464,6 +464,13 @@
                             ctxm = retVal.props.onContextMenu
                             srctype    = 'img'
                         }
+                    }else if (retVal.props.original && retVal.props.src.match(/(\.jpg\?|\.webp\?|\.gif\?|\.jpeg\?)/)) {
+                        let urlpart ='url("'+retVal.props.original+'")'
+                        if(seen.indexOf(urlpart)==-1){
+                            nextsrc = urlpart
+                            ctxm = retVal.props.onContextMenu
+                            srctype    = 'img'
+                        }
                     }
 
                     let videoadded=false;
@@ -977,6 +984,7 @@ onStop() {
     BdApi.saveData(this.meta.name, "floodModeOn", this.floodedChannels);
     BdApi.saveData(this.meta.name, "seen", this.seenChannels);
     this.contextMenuPatch?.();
+    this.contextMenuUserPatch?.();
     SelectedChannelStore.removeChangeListener(this.channelChange);
 
 }
@@ -1090,6 +1098,52 @@ patchChannelContextMenu() {
         retVal.props.children.splice(1, 0, newItem);
 
     });
+
+    this.contextMenuUserPatch = ContextMenu.patch("user-context", (retVal, props) => {
+
+
+        const newItembg = ContextMenu.buildItem({
+            type: "toggle",
+            label: "Override channel background",
+            active: this.isBGOverride(props.channel),
+            action: () => {
+                if (this.isBGOverride(props.channel)) this.removeBgOverride(props.channel);
+                else this.addBgOverride(props.channel);
+            }
+        });
+
+
+        retVal.props.children.splice(1, 0, newItembg);
+
+
+        const newItemopacity = ContextMenu.buildItem({
+            type: "toggle",
+            label: "Low Opacity Posts In Flood Mode",
+            active: this.isLowOpacity(props.channel),
+            action: () => {
+                if (this.isLowOpacity(props.channel)) this.removeLowOpacity(props.channel);
+                else this.addLowOpacity(props.channel);
+            }
+        });
+
+
+        retVal.props.children.splice(1, 0, newItemopacity);
+
+        const newItem = ContextMenu.buildItem({
+            type: "toggle",
+            label: "Enable ContentFlood Gallery",
+            active: this.isFlooding(props.channel),
+            action: () => {
+                if (this.isFlooding(props.channel)) this.removeFlood(props.channel);
+                else this.addFlood(props.channel);
+            }
+        });
+
+        retVal.props.children.splice(1, 0, newItem);
+
+    });
+
+    
 }
 
 
