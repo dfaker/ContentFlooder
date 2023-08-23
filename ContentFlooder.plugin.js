@@ -48,6 +48,23 @@
         changelog: [
         ],
         defaultConfig: [
+
+            {
+                type: "switch",
+                id: "captureImages",
+                name: "Capture Posted Images",
+                note: "Capture and process posted images.",
+                value: true
+            },
+
+            {
+                type: "switch",
+                id: "captureVideos",
+                name: "Capture Posted Videos",
+                note: "Capture and process posted videos.",
+                value: true
+            },
+
         ],
         main: "index.js"
     };
@@ -437,7 +454,7 @@
                     }
 
 
-                    if (retVal.props.src && retVal.props.src.match(/(\.webm\?|\.mov\?|\.mp4\?)/)) {
+                    if (this.settings.captureVideos && retVal.props.src && retVal.props.src.match(/(\.webm\?|\.mov\?|\.mp4\?)/)) {
                         let parts = retVal.props.src.split('?')
                         if(seen.indexOf(parts[0])==-1){
                             nextsrc = parts[0]
@@ -445,26 +462,26 @@
                             ctxm = retVal.props.onContextMenu
                             srctype    = 'video'
                         }
-                    }else if (retVal.props.src && retVal.props.src.match(/(webm|mov|mp4)$/)) {
+                    }else if (this.settings.captureVideos && retVal.props.src && retVal.props.src.match(/(webm|mov|mp4)$/)) {
                         if(seen.indexOf(retVal.props.src)==-1){
                             nextsrc = retVal.props.src
                             ctxm = retVal.props.onContextMenu
                             srctype    = 'video'
                         }                
-                    }else if (retVal.props.original && retVal.props.original.match(/(webm|mov|mp4)$/)) {
+                    }else if (this.settings.captureVideos && retVal.props.original && retVal.props.original.match(/(webm|mov|mp4)$/)) {
                         if(seen.indexOf(retVal.props.original)==-1){
                             nextsrc = retVal.props.original
                             ctxm = retVal.props.onContextMenu
                             srctype    = 'video'
                         }
-                    }else if (retVal.props.original && retVal.props.original.match(/(jpg|webp|png|gif|jpeg)$/)) {
+                    }else if (this.settings.captureImages && retVal.props.original && retVal.props.original.match(/(jpg|webp|png|gif|jpeg)$/)) {
                         let urlpart ='url("'+retVal.props.original+'")'
                         if(seen.indexOf(urlpart)==-1){
                             nextsrc = urlpart
                             ctxm = retVal.props.onContextMenu
                             srctype    = 'img'
                         }
-                    }else if (retVal.props.original && retVal.props.src.match(/(\.jpg\?|\.webp\?|\.gif\?|\.jpeg\?)/)) {
+                    }else if (this.settings.captureImages && retVal.props.original && retVal.props.src.match(/(\.jpg\?|\.webp\?|\.gif\?|\.jpeg\?)/)) {
                         let urlpart ='url("'+retVal.props.original+'")'
                         if(seen.indexOf(urlpart)==-1){
                             nextsrc = urlpart
