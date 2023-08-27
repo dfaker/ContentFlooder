@@ -192,6 +192,8 @@
             /** @type {Set<string>} */
             this.seenChannels = new Set(BdApi.loadData(this.meta.name, "seen") ?? []);
 
+            this.chache = (BdApi.loadData(this.meta.name, "postCache") ?? {});
+
             this.debouncedupdatevideoGridOffset = _.debounce(this.updatevideoGridOffset,100,{'leading': true})
 
             this.addStyle();
@@ -961,12 +963,15 @@ applypauserule(){
 keyEvent(e){
     if(e.ctrlKey && e.key=='h'){
         let bigplayer = document.getElementById("fsvideowrappercontentflooderbigplayer")
-        if(bigplayer.className == 'zoom-in-out-box'){
+        if(bigplayer.className == ''){
+            bigplayer.className = 'fullscreen-box'
+            document.documentElement.requestFullscreen()
+        }else if(bigplayer.className == 'fullscreen-box'){
+            bigplayer.className = 'fullscreen-box zoom-in-out-box'
+            document.documentElement.requestFullscreen()
+        }else{
             bigplayer.className = ''
             document.exitFullscreen()
-        }else{
-            bigplayer.className = 'zoom-in-out-box'
-            document.documentElement.requestFullscreen()
         }
 
     }
@@ -1000,6 +1005,8 @@ keyEvent(e){
 onStop() {
     BdApi.saveData(this.meta.name, "floodModeOn", this.floodedChannels);
     BdApi.saveData(this.meta.name, "seen", this.seenChannels);
+    BdApi.saveData(this.meta.name, "postCache", this.chache);
+
     this.contextMenuPatch?.();
     this.contextMenuUserPatch?.();
     SelectedChannelStore.removeChangeListener(this.channelChange);
@@ -1048,7 +1055,6 @@ addLowOpacity(channel) {
     Dispatcher.emit("flood");
     BdApi.saveData(this.meta.name, "opacityModeOn", this.lowOpacityChannels);
 }
-
 
 
 removeFlood(channel) {
