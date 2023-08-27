@@ -137,7 +137,7 @@
                 this.styleTemplate = `
                 .opacityElemFlood{opacity:0.2;} 
                 .opacityElemFlood:hover{opacity:1.0;} 
-                .opacityLowElemFlood{opacity:0.5;} 
+                .opacityLowElemFlood{opacity:0.25;} 
                 .opacityLowElemFlood:hover{opacity:1.0;}
                 .opacityLowElemFlood:hover{opacity:1.0;}
 
@@ -961,17 +961,62 @@ applypauserule(){
 }
 
 keyEvent(e){
+
+    let optmaxvideos = document.getElementById('fspaneoptmaxVideos');
+    let fspane = document.getElementById('fsfullscreencontentflooder');
+    let bigplayer = document.getElementById('fsvideowrappercontentflooderbigplayer');
+    let fspaneoptx = document.getElementById('fspaneoptselectx');
+    let fspaneopty = document.getElementById('fspaneoptselecty');
+    let fspaneoptvol = document.getElementById('fspaneoptselectvol');
+    let optautoadvance = document.getElementById('fspaneoptselectauto');
+
+
+
+    let divs = document.getElementsByTagName('div');
+    let di = 0;
+    let header = null;
+    for(di in divs){
+        if(divs[di].className && divs[di].className.indexOf('titleBar') > -1){
+            header = divs[di];
+            break
+        }
+    }
+
     if(e.ctrlKey && e.key=='h'){
         let bigplayer = document.getElementById("fsvideowrappercontentflooderbigplayer")
         if(bigplayer.className == ''){
             bigplayer.className = 'fullscreen-box'
             document.documentElement.requestFullscreen()
+            header.style.display = 'none'
+            optmaxvideos.style.top='0px'
+            fspane.style.paddingTop='0px'
+            bigplayer.style.top='0px'
+            fspaneoptx.style.top='0px'
+            fspaneopty.style.top='0px'
+            fspaneoptvol.style.top='0px'
+            optautoadvance.style.top='0px'
         }else if(bigplayer.className == 'fullscreen-box'){
             bigplayer.className = 'fullscreen-box zoom-in-out-box'
             document.documentElement.requestFullscreen()
+            optmaxvideos.style.top='0px'
+            fspane.style.paddingTop='0px'
+            bigplayer.style.top='0px'
+            fspaneoptx.style.top='0px'
+            fspaneopty.style.top='0px'
+            fspaneoptvol.style.top='0px'
+            optautoadvance.style.top='0px'
+            header.style.display = 'none'
         }else{
             bigplayer.className = ''
             document.exitFullscreen()
+            header.style.display = 'flex'
+            optmaxvideos.style.top='20px'
+            fspane.style.paddingTop='20px'
+            bigplayer.style.top='20px'
+            fspaneoptx.style.top='20px'
+            fspaneopty.style.top='20px'
+            fspaneoptvol.style.top='20px'
+            optautoadvance.style.top='20px'
         }
 
     }
@@ -995,6 +1040,15 @@ keyEvent(e){
                 for(let i=0;i<elements.length;i++){
                     elements[i].pause()
                 }
+                header.style.display = 'flex'
+                optmaxvideos.style.top='20px'
+                fspane.style.paddingTop='20px'
+                bigplayer.style.top='20px'
+                fspaneoptx.style.top='20px'
+                fspaneopty.style.top='20px'
+                fspaneoptvol.style.top='20px'
+                optautoadvance.style.top='20px'
+                document.exitFullscreen()
 
             }
         }
