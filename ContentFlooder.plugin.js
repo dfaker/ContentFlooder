@@ -74,6 +74,14 @@
         stop() {}
     }
 
+    function debounce(func, timeout = 300){
+      let timer;
+      return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => { func.apply(this, args); }, timeout);
+      };
+    }
+
     if (!global.ZeresPluginLibrary) {
         BdApi.showConfirmationModal("Library Missing", `The library plugin needed for ${config.name ?? config.info.name} is missing. Please click Download Now to install it.`, {
             confirmText: "Download Now",
@@ -194,7 +202,7 @@
 
             this.chache = (BdApi.loadData(this.meta.name, "postCache") ?? {});
 
-            this.debouncedupdatevideoGridOffset = _.debounce(this.updatevideoGridOffset,100,{'leading': true})
+            this.debouncedupdatevideoGridOffset = debounce(this.updatevideoGridOffset,100)
 
             this.addStyle();
 
@@ -226,6 +234,7 @@
                 bigplayer.id="fsvideowrappercontentflooderbigplayer"
                 bigplayer.style.position='fixed'
                 bigplayer.style.top='20px'
+                bigplayer.playsInline=true
                 bigplayer.style.left='0px'
                 bigplayer.style.width='100%'
                 bigplayer.style.height='100%'
@@ -412,7 +421,7 @@
                     }else{
                         vid = document.createElement("video");
                         vid.className="fsvideowrappercontentflooder"
-
+                        vid.playsInline=true
                         vid.style.position = 'fixed';
                         vid.style.top = '111px';
                         vid.style.bottom = '0px';
@@ -1129,6 +1138,7 @@ channelChange() {
     if (!channel?.id || this.seenChannels.has(channel.id)) return;
     this.seenChannels.add(channel.id);
     BdApi.saveData(this.meta.name, "seen", this.seenChannels);
+
 }
 
 patchChannelContextMenu() {
@@ -1145,9 +1155,7 @@ patchChannelContextMenu() {
             }
         });
 
-
         retVal.props.children.splice(1, 0, newItembg);
-
 
         const newItemopacity = ContextMenu.buildItem({
             type: "toggle",
